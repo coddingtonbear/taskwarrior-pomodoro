@@ -19,9 +19,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var activeTimerEnds: NSDate? = nil
     var activeMenuItem: NSMenuItem? = nil
     var pomodoroDuration:Double = 60 * 25
+    var configuration: [String: String]? = nil
 
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application
+        configuration = getConfigurationSettings()
         
         if let button = statusItem.button {
             button.image = NSImage(named: "StatusBarButtonImage")
@@ -47,10 +49,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    func getConfigurationSettings() -> [String: String] {
+        var configurationSettings = [String: String]()
+        
+        let location = NSString(string: "~/.taskrc").stringByExpandingTildeInPath
+        let fileContent = try? NSString(contentsOfFile: location, encoding: NSUTF8StringEncoding) as String
+        let fileContentLines = fileContent?.characters.split{$0 == "\n"}.map(String.init)
+        
+        for line in fileContentLines! {
+            if line.hasPrefix("pomodoro") {
+                var dotIndex: String.CharacterView.Index? = nil;
+                var equalIndex: String.CharacterView.Index? = nil;
+                
+                if let idx = line.characters.indexOf("." as Character) {
+                    dotIndex = idx
+                }
+                if let idx = line.characters.indexOf("=" as Character) {
+                    equalIndex = idx
+                }
+                
+                if dotIndex != nil && equalIndex != nil {
+                    let configurationKey = line.substringWithRange(
+                        Range(start: dotIndex!.successor(), end: equalIndex!)
+                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                    let configurationValue = line.substringFromIndex(
+                        equalIndex!.successor()
+                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                    configurationSettings[configurationKey] = configurationValue
+                }
+            }
+        }
+        
+        return configurationSettings
+    }
+    
     func getPendingTasks() -> [JSON] {
+        var pendingArguments = ["status:pending"]
+        
+        if let definedDefaultFilter = configuration!["defaultFilter"] {
+            print(definedDefaultFilter)
+            pendingArguments = [definedDefaultFilter] + pendingArguments
+        }
+        
         let task = NSTask()
         task.launchPath = taskPath
-        task.arguments = ["export", "status:pending"]
+        task.arguments = pendingArguments + ["export"]
         
         let pipe = NSPipe()
         task.standardOutput = pipe
@@ -81,7 +124,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         let tasks = getPendingTasks();
         
-        print("Updating menu...")
         menu.addItem(NSMenuItem(title: "Refresh Tasks", action: Selector("updateMenuItems:"), keyEquivalent: "r"))
         if activeTaskId != nil {
             menu.addItem(NSMenuItem.separatorItem())
@@ -180,7 +222,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func timerExpired() {
-        print("Timer Expired!")
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
