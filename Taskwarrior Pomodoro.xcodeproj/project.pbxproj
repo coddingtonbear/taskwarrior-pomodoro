@@ -10,6 +10,7 @@
 		4C879AE51C13BDF8000C3F84 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AE41C13BDF8000C3F84 /* AppDelegate.swift */; };
 		4C879AE71C13BDF8000C3F84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE61C13BDF8000C3F84 /* Assets.xcassets */; };
 		4C879AEA1C13BDF8000C3F84 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE81C13BDF8000C3F84 /* MainMenu.xib */; };
+		4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +19,7 @@
 		4C879AE61C13BDF8000C3F84 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4C879AE91C13BDF8000C3F84 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		4C879AEB1C13BDF8000C3F84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +38,7 @@
 			children = (
 				4C879AE31C13BDF8000C3F84 /* Taskwarrior Pomodoro */,
 				4C879AE21C13BDF8000C3F84 /* Products */,
+				4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -129,6 +132,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4C879AE51C13BDF8000C3F84 /* AppDelegate.swift in Sources */,
+				4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
