@@ -10,7 +10,7 @@ You can [download the latest release here](http://coddingtonbear-public.s3.amazo
 
 ## Configuration 
 
-Although very little configuration is currently provided, but you can configure Taskwarrior Pomodoro by adding lines to your `~/.taskrc` file. 
+Although very little configuration is currently provided, you can configure Taskwarrior Pomodoro by adding lines to your `~/.taskrc` file. 
 
 ### Task List Filter
 
