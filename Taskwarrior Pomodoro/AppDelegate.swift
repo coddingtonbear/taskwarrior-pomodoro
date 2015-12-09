@@ -123,6 +123,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func updateMenuItems() {
         let menu = NSMenu()
         let tasks = getPendingTasks();
+
+        configuration = getConfigurationSettings()
         
         menu.addItem(NSMenuItem(title: "Refresh Tasks", action: Selector("updateMenuItems:"), keyEquivalent: "r"))
         if activeTaskId != nil {
