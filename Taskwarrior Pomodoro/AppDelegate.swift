@@ -3,7 +3,7 @@
 //  Taskwarrior Pomodoro
 //
 //  Created by Adam Coddington on 12/5/15.
-//  Copyright © 2015 Adam Coddington. All rights reserved.
+//  MIT Licensed
 //
 
 import Cocoa
