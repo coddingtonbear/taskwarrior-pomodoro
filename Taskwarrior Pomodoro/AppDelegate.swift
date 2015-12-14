@@ -172,7 +172,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let task = NSTask()
         task.launchPath = taskPath
-        task.arguments = [activeTaskId!, "export"]
+        task.arguments = ["rc.json.array=off", activeTaskId!, "export"]
         
         let pipe = NSPipe()
         task.standardOutput = pipe
