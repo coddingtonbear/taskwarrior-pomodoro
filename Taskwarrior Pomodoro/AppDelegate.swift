@@ -9,9 +9,10 @@
 import Cocoa
 
 @NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @IBOutlet weak var window: NSWindow!
     
+    //MARK: Attributes -
     let taskPath = "/usr/local/bin/task"
     let statusItem = NSStatusBar.systemStatusBar().statusItemWithLength(NSSquareStatusItemLength)
     var activeTaskId: String? = nil
@@ -20,7 +21,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var activeMenuItem: NSMenuItem? = nil
     var pomodoroDuration:Double = 60 * 25
     var configuration: [String: String]? = nil
+    let menu = NSMenu();
+    
+    //MARK: Menu Items Tags -
+    let kTimerItemTag = 1
+    let kActiveTaskSeparator1ItemTag = 2
+    let kActiveTaskMenuItemTag = 3
+    let kStopTaskMenuItemTag = 4
+    let kActiveTaskSeparator2ItemTag = 5
+    let kPendingTaskMenuItemTag = 6;
+    let kQuitSeparatorMenuItemTag = 7;
+    let kQuitMenuItemTag = 8;
 
+    //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application
         configuration = getConfigurationSettings()
@@ -38,14 +51,79 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             repeats: true
         )
         
+        menu.delegate = self
+        statusItem.menu = menu
+    }
+    
+    //MARK: NSMenuDelegate -
+    func menuWillOpen(menu: NSMenu) {
+        updateMenuItems();
+    }
+    
+    //MARK: API -
+    func updateMenuItems(aNotification: NSNotification){
         updateMenuItems()
     }
     
-    func updateActiveMenuItem() {
-        let date = NSDate()
-        if activeMenuItem != nil && activeTimerEnds != nil{
-            let minutesFrom = activeTimerEnds!.minutesFrom(date) + 1
-            activeMenuItem!.title = "Stop (\(minutesFrom) minutes remaining)"
+    func updateMenuItems() {
+        configuration = getConfigurationSettings()
+        
+        setupActiveTaskMenuItem()
+        setupQuitMenuItem()
+        setupTaskListMenuItems()
+    }
+    
+    func setupActiveTaskMenuItem() {
+        let activeSeparator1MenuItem = getActiveSeparatorMenuItem(1)
+        let activeTaskMenuItem = getActiveTaskMenuItem()
+        let stopTaskMenuItem = getStopTaskMenuItem()
+        getActiveSeparatorMenuItem(2)
+        
+        
+        if activeTaskId != nil {
+            activeSeparator1MenuItem.hidden = false
+            activeTaskMenuItem.hidden = false
+            stopTaskMenuItem.hidden = false
+            let taskDescription = getActiveTaskDescription()
+            activeTaskMenuItem.title = "Active: \(taskDescription)"
+        } else {
+            activeSeparator1MenuItem.hidden = true
+            activeTaskMenuItem.hidden = true
+            stopTaskMenuItem.hidden = true
+        }
+    }
+    
+    func setupQuitMenuItem() {
+        guard menu.itemWithTag(kQuitMenuItemTag) == nil else {
+            return
+        }
+        
+        separatorWithTag(kQuitSeparatorMenuItemTag)
+        
+        let quitMenuItem = NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: Selector("terminate:"), keyEquivalent: "q")
+        quitMenuItem.tag = kQuitMenuItemTag
+        menu.addItem(quitMenuItem)
+    }
+    
+    func setupTaskListMenuItems() {
+        clearOldTasks()
+        
+        let tasks = getPendingTasks();
+        
+        for task in tasks {
+            if let description = task["description"].string {
+                if let uuid = task["uuid"].string {
+                    let menuItem = NSMenuItem(
+                        title: description,
+                        action: Selector("setActiveTask:"),
+                        keyEquivalent: ""
+                    )
+                    menuItem.representedObject = uuid
+                    menuItem.tag = kPendingTaskMenuItemTag
+                    let index = menu.indexOfItemWithTag(kQuitSeparatorMenuItemTag)
+                    menu.insertItem(menuItem, atIndex: index)
+                }
+            }
         }
     }
     
@@ -71,10 +149,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 if dotIndex != nil && equalIndex != nil {
                     let configurationKey = line.substringWithRange(
                         Range(start: dotIndex!.successor(), end: equalIndex!)
-                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                        ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
                     let configurationValue = line.substringFromIndex(
                         equalIndex!.successor()
-                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                        ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
                     configurationSettings[configurationKey] = configurationValue
                 }
             }
@@ -83,8 +161,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return configurationSettings
     }
     
+    func updateActiveMenuItem() {
+        let date = NSDate()
+        let activeTaskMenuItem = getActiveTaskMenuItem();
+        if activeTaskMenuItem.hidden == false && activeTimerEnds != nil {
+            let minutesFrom = activeTimerEnds!.minutesFrom(date) + 1
+            getStopTaskMenuItem().title = "Stop (\(minutesFrom) minutes remaining)"
+        }
+    }
+    
     func getPendingTasks() -> [JSON] {
-        var pendingArguments = ["status:pending"]
+        var pendingArguments = ["status:Pending"]
         
         if let definedDefaultFilter = configuration!["defaultFilter"] {
             print(definedDefaultFilter)
@@ -116,58 +203,75 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return taskList;
     }
     
-    func updateMenuItems(aNotification: NSNotification){
-        updateMenuItems()
+    func clearOldTasks() {
+        while let item = menu.itemWithTag(kPendingTaskMenuItemTag) {
+            menu.removeItem(item)
+        }
     }
     
-    func updateMenuItems() {
-        let menu = NSMenu()
-        let tasks = getPendingTasks();
-
-        configuration = getConfigurationSettings()
+    func getStopTaskMenuItem() -> NSMenuItem {
+        if let item = menu.itemWithTag(kStopTaskMenuItemTag) {
+            return item;
+        }
         
-        menu.addItem(NSMenuItem(title: "Refresh Tasks", action: Selector("updateMenuItems:"), keyEquivalent: "r"))
-        if activeTaskId != nil {
-            menu.addItem(NSMenuItem.separatorItem())
-            let taskDescription = getActiveTaskDescription()
-            let activeTaskItem = NSMenuItem(
-                title: "Active: \(taskDescription)",
-                action: "",
-                keyEquivalent: ""
-            )
-            activeTaskItem.enabled = false
-            
-            menu.addItem(activeTaskItem)
-            activeMenuItem = NSMenuItem(title: "Stop", action: Selector("stopActiveTask:"), keyEquivalent: "s")
-            menu.addItem(activeMenuItem!)
-        }
-        if tasks.count > 0 {
-            menu.addItem(NSMenuItem.separatorItem())
-        }
-        for task in tasks {
-            if let description = task["description"].string {
-                if let uuid = task["uuid"].string {
-                    let menuItem = NSMenuItem(
-                        title: description,
-                        action: Selector("setActiveTask:"),
-                        keyEquivalent: ""
-                    )
-                    menuItem.representedObject = uuid
-                    menu.addItem(menuItem)
-                }
-            }
-        }
-        menu.addItem(NSMenuItem.separatorItem())
-        menu.addItem(NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: Selector("terminate:"), keyEquivalent: "q"))
+        let stopItem = NSMenuItem(
+            title: "Stop",
+            action: Selector("stopActiveTask:"),
+            keyEquivalent: "s"
+        )
+        stopItem.tag = kStopTaskMenuItemTag
+        menu.addItem(stopItem)
         
-        statusItem.menu = menu
+        return stopItem;
     }
-
-    func applicationWillTerminate(aNotification: NSNotification) {
-        // Insert code here to tear down your application
+    
+    func getActiveSeparatorMenuItem(index: Int) -> NSMenuItem {
+        var tag: Int = 1
+        
+        switch (index) {
+        case 1:
+            tag = kActiveTaskSeparator1ItemTag
+        case 2:
+            tag = kActiveTaskSeparator2ItemTag
+        default:
+            tag = kActiveTaskSeparator1ItemTag;
+        }
+        
+        let separator = menu.itemWithTag(tag) ?? separatorWithTag(tag);
+        
+        return separator
+    }
+    
+    func getActiveTaskMenuItem() -> NSMenuItem {
+        if let item = menu.itemWithTag(kActiveTaskMenuItemTag) {
+            return item
+        }
+        
+        let taskDescription = getActiveTaskDescription()
+        let activeItem = NSMenuItem(
+            title: "Active: \(taskDescription)",
+            action: "",
+            keyEquivalent: ""
+        )
+        activeItem.enabled = false
+        activeItem.tag = kActiveTaskMenuItemTag
+        menu.addItem(activeItem)
+        
+        return activeItem
+    }
+    
+    func separatorWithTag(tag: Int) -> NSMenuItem {
+        let separator = NSMenuItem.separatorItem()
+        separator.tag = tag
+        menu.addItem(separator);
+        return separator
     }
     
     func getActiveTaskDescription() -> String {
+        if activeTaskId == nil {
+            return "N/A"
+        }
+        
         var description: String = ""
         
         let task = NSTask()
