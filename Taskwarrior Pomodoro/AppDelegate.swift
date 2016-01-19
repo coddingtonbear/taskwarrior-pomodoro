@@ -22,6 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var pomodoroDuration:Double = 60 * 25
     var configuration: [String: String]? = nil
     let menu = NSMenu();
+    var activeCountdownTimer: NSTimer? = nil
+
     
     //MARK: Menu Items Tags -
     let kTimerItemTag = 1
@@ -32,6 +34,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let kPendingTaskMenuItemTag = 6;
     let kQuitSeparatorMenuItemTag = 7;
     let kQuitMenuItemTag = 8;
+    
+    //MARK: Menu Items Titles -
+    let kStopTitleFormat = "Stop (%02u:%02u remaining)"
+    let kActiveTitlePrefix = "Active: "
 
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
@@ -43,14 +49,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             button.action = Selector("printQuote:")
         }
         
-        NSTimer.scheduledTimerWithTimeInterval(
-            5,
-            target: self,
-            selector: "updateActiveMenuItem",
-            userInfo: nil,
-            repeats: true
-        )
-        
         menu.delegate = self
         statusItem.menu = menu
     }
@@ -58,9 +56,33 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     //MARK: NSMenuDelegate -
     func menuWillOpen(menu: NSMenu) {
         updateMenuItems();
+        startCountdownTimer()
     }
     
+    func menuDidClose(menu: NSMenu) {
+        stopCountdownTimer()
+    }
+
+    
     //MARK: API -
+    func startCountdownTimer() {
+        if activeTimerEnds != nil {
+            activeCountdownTimer = NSTimer(
+                timeInterval: 1.0,
+                target: self,
+                selector: "updateTaskTimer",
+                userInfo: nil,
+                repeats: true
+            )
+            NSRunLoop.currentRunLoop().addTimer(self.activeCountdownTimer!, forMode: NSEventTrackingRunLoopMode)
+        }
+    }
+    
+    func stopCountdownTimer() {
+        activeCountdownTimer?.invalidate();
+        activeCountdownTimer = nil
+    }
+    
     func updateMenuItems(aNotification: NSNotification){
         updateMenuItems()
     }
@@ -85,7 +107,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeTaskMenuItem.hidden = false
             stopTaskMenuItem.hidden = false
             let taskDescription = getActiveTaskDescription()
-            activeTaskMenuItem.title = "Active: \(taskDescription)"
+            activeTaskMenuItem.title = "\(kActiveTitlePrefix) \(taskDescription)"
+            updateTaskTimer()
         } else {
             activeSeparator1MenuItem.hidden = true
             activeTaskMenuItem.hidden = true
@@ -159,15 +182,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         
         return configurationSettings
-    }
-    
-    func updateActiveMenuItem() {
-        let date = NSDate()
-        let activeTaskMenuItem = getActiveTaskMenuItem();
-        if activeTaskMenuItem.hidden == false && activeTimerEnds != nil {
-            let minutesFrom = activeTimerEnds!.minutesFrom(date) + 1
-            getStopTaskMenuItem().title = "Stop (\(minutesFrom) minutes remaining)"
-        }
     }
     
     func getPendingTasks() -> [JSON] {
@@ -249,7 +263,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         let taskDescription = getActiveTaskDescription()
         let activeItem = NSMenuItem(
-            title: "Active: \(taskDescription)",
+            title: "\(kActiveTitlePrefix) \(taskDescription)",
             action: "",
             keyEquivalent: ""
         )
@@ -304,6 +318,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeTimer!.invalidate()
             activeTimer = nil
         }
+        
+        activeTimerEnds = nil;
+        updateTaskTimer()
 
         let task = NSTask()
         task.launchPath = taskPath
@@ -333,6 +350,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeTimer = nil
         }
         
+        stopActiveTask()
+        
         let alert:NSAlert = NSAlert();
         alert.messageText = "Break time!";
         alert.informativeText = "Taskwarrior Pomodoro";
@@ -355,6 +374,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         let now = NSDate()
         activeTimerEnds = now.dateByAddingTimeInterval(pomodoroDuration);
+    }
+    
+    func updateTaskTimer() {
+        let date = NSDate()
+        
+        let minutesFrom = activeTimerEnds?.minutesFrom(date) ?? 25
+        let secondsFrom = (activeTimerEnds?.secondsFrom(date) ?? 1500) - minutesFrom * 60
+        
+        getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
     }
 }
 
