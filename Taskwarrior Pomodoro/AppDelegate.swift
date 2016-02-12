@@ -344,12 +344,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateMenuItems()
     }
     
+    func runPostCompletionHooks() {
+        if let postCompletionCommand = configuration!["postCompletionCommand"] {
+            if let taskId = activeTaskId {
+                let outputPipe = NSPipe()
+                let errorPipe = NSPipe()
+                
+                let outputFile = outputPipe.fileHandleForReading
+                let errorFile = errorPipe.fileHandleForReading
+                
+                let task = NSTask()
+                task.launchPath = "/bin/sh"
+                task.arguments = ["-c", "\(postCompletionCommand) \(taskId)"]
+                task.launch()
+                task.waitUntilExit()
+                
+                if task.terminationStatus != 0 {
+                    let alert:NSAlert = NSAlert();
+                    alert.messageText = "Post-Hook Error";
+                    alert.informativeText = "An error was encountered when running your post-hook command: `\()`.";
+                    alert.runModal();
+                }
+            }
+        }
+    }
+    
     func timerExpired() {
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
         }
         
+        runPostCompletionHooks()
         stopActiveTask()
         
         let alert:NSAlert = NSAlert();
