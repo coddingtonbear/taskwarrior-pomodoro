@@ -188,7 +188,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var pendingArguments = ["status:Pending"]
         
         if let definedDefaultFilter = configuration!["defaultFilter"] {
-            print(definedDefaultFilter)
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
         
