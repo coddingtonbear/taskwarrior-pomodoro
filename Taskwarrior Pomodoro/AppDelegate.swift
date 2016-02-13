@@ -344,29 +344,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateMenuItems()
     }
     
-    func runPostCompletionHooks() {
+    func runPostCompletionHooks(taskId: String) {
         if let postCompletionCommand = configuration!["postCompletionCommand"] {
-            if let taskId = activeTaskId {
-                let outputPipe = NSPipe()
-                let errorPipe = NSPipe()
-                
-                let outputFile = outputPipe.fileHandleForReading
-                let errorFile = errorPipe.fileHandleForReading
-                
-                let task = NSTask()
-                task.launchPath = "/bin/sh"
-                task.arguments = ["-c", "\(postCompletionCommand) \(taskId)"]
-                task.launch()
-                task.waitUntilExit()
-                
-                if task.terminationStatus != 0 {
-                    let alert:NSAlert = NSAlert();
-                    alert.messageText = "Post-Hook Error";
-                    alert.informativeText = "An error was encountered when running your post-hook command: `\()`.";
-                    alert.runModal();
-                }
+            let errorPipe = NSPipe()
+            let errorFile = errorPipe.fileHandleForReading
+            
+            let task = NSTask()
+            task.launchPath = "/bin/sh"
+            task.arguments = ["-c", "\(postCompletionCommand) \(taskId)"]
+            task.standardError = errorPipe
+            task.launch()
+            task.waitUntilExit()
+            
+            let stderr = stringFromFileAndClose(errorFile)
+            
+            if task.terminationStatus != 0 {
+                let alert:NSAlert = NSAlert();
+                alert.messageText = "Post-Hook Error";
+                alert.informativeText = "An error was encountered when running your post-hook command: `\(stderr)`.";
+                alert.runModal();
             }
         }
+    }
+    
+    private func stringFromFileAndClose(file: NSFileHandle) -> String {
+        let data = file.readDataToEndOfFile()
+        file.closeFile()
+        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as String?
+        return output ?? ""
     }
     
     func timerExpired() {
@@ -374,14 +379,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeTimer!.invalidate()
             activeTimer = nil
         }
-        
-        runPostCompletionHooks()
+
+        let taskId = activeTaskId;
+
         stopActiveTask()
-        
+
         let alert:NSAlert = NSAlert();
         alert.messageText = "Break time!";
         alert.informativeText = "Taskwarrior Pomodoro";
         alert.runModal();
+
+        runPostCompletionHooks(taskId!)
     }
     
     func setActiveTask(sender: AnyObject) {
