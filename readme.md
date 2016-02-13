@@ -23,3 +23,11 @@ pomodoro.defaultFilter=+work
 ```
 
 Note that taskwarrior filters can be quite complex (although my specific use of this feature will not be particularly helpful, it may help you come to terms with what is possible by knowing that the one I used for generating the above screenshot was `pomodoro.defaultFilter=(intheamtrellolistid:5591ecedb12a520b50d2e8b8 or intheamtrellolistid:559173de3295c9b2e550243f or intheamtrellolistid:55aee69377ccc07e295462a3) and (-work)`) and are thus outside the scope of this document, but you can [find more information about filters in Taskwarrior's documentation](http://taskwarrior.org/docs/filter.html).
+
+### Post-Pomodoro Hook
+
+You can configure Taskwarrior Pomodoro to call a script of your choice after you complete a Pomodoro.  The script will receive one additional command-line argument: the UUID of the task that you were working on.  You could use this for a variety of things, including updating goal-tracking software or recording billable hours.
+
+```
+pomodoro.postCompletionCommand=/path/to/my/script
+```
