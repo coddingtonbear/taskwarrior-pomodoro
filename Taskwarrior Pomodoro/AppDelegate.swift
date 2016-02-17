@@ -34,6 +34,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let kPendingTaskMenuItemTag = 6;
     let kQuitSeparatorMenuItemTag = 7;
     let kQuitMenuItemTag = 8;
+    let kSyncSeparatorMenuItemTag = 7;
+    let kSyncMenuItemTag = 9;
     
     //MARK: Menu Items Titles -
     let kStopTitleFormat = "Stop (%02u:%02u remaining)"
@@ -88,9 +90,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func updateMenuItems() {
-        configuration = getConfigurationSettings()
-        
         setupActiveTaskMenuItem()
+        setupSyncMenuItem()
         setupQuitMenuItem()
         setupTaskListMenuItems()
     }
@@ -114,6 +115,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             activeTaskMenuItem.hidden = true
             stopTaskMenuItem.hidden = true
         }
+    }
+    
+    func setupSyncMenuItem() {
+        guard menu.itemWithTag(kSyncMenuItemTag) == nil else {
+            return
+        }
+        
+        var hidden = true;
+        if configuration!["taskd.server"] != nil {
+            hidden = false;
+        }
+        
+        let syncSeparator = separatorWithTag(kSyncSeparatorMenuItemTag)
+        syncSeparator.hidden = hidden;
+        
+        let syncMenuItem = NSMenuItem(title: "Synchronize", action: Selector("sync:"), keyEquivalent: "s")
+        syncMenuItem.tag = kSyncMenuItemTag
+        syncMenuItem.hidden = hidden;
+        menu.addItem(syncMenuItem)
     }
     
     func setupQuitMenuItem() {
@@ -143,41 +163,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     )
                     menuItem.representedObject = uuid
                     menuItem.tag = kPendingTaskMenuItemTag
-                    let index = menu.indexOfItemWithTag(kQuitSeparatorMenuItemTag)
+                    let index = menu.indexOfItemWithTag(kSyncSeparatorMenuItemTag)
                     menu.insertItem(menuItem, atIndex: index)
                 }
             }
         }
     }
     
-    func getConfigurationSettings() -> [String: String] {
+    func getConfigurationSettings(path: String = "~/.taskrc") -> [String: String] {
         var configurationSettings = [String: String]()
         
-        let location = NSString(string: "~/.taskrc").stringByExpandingTildeInPath
+        let location = NSString(string: path).stringByExpandingTildeInPath
         let fileContent = try? NSString(contentsOfFile: location, encoding: NSUTF8StringEncoding) as String
         let fileContentLines = fileContent?.characters.split{$0 == "\n"}.map(String.init)
         
         for line in fileContentLines! {
-            if line.hasPrefix("pomodoro") {
-                var dotIndex: String.CharacterView.Index? = nil;
-                var equalIndex: String.CharacterView.Index? = nil;
-                
-                if let idx = line.characters.indexOf("." as Character) {
-                    dotIndex = idx
+            var equalIndex: String.CharacterView.Index? = nil;
+
+            if let idx = line.characters.indexOf("=" as Character) {
+                equalIndex = idx
+            }
+            
+            if line.hasPrefix("include ") {
+                var pathLine = line;
+                let prefixRange = line.startIndex..<line.startIndex.advancedBy(8)
+                pathLine.removeRange(prefixRange)
+                for (k, v) in getConfigurationSettings(pathLine) {
+                    configurationSettings[k] = v
                 }
-                if let idx = line.characters.indexOf("=" as Character) {
-                    equalIndex = idx
-                }
-                
-                if dotIndex != nil && equalIndex != nil {
-                    let configurationKey = line.substringWithRange(
-                        Range(start: dotIndex!.successor(), end: equalIndex!)
-                        ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-                    let configurationValue = line.substringFromIndex(
-                        equalIndex!.successor()
-                        ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-                    configurationSettings[configurationKey] = configurationValue
-                }
+            } else if equalIndex != nil {
+                let configurationKey = line.substringWithRange(
+                    Range(start: line.startIndex, end: equalIndex!)
+                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                let configurationValue = line.substringFromIndex(
+                    equalIndex!.successor()
+                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                configurationSettings[configurationKey] = configurationValue
             }
         }
         
@@ -187,7 +208,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func getPendingTasks() -> [JSON] {
         var pendingArguments = ["status:Pending"]
         
-        if let definedDefaultFilter = configuration!["defaultFilter"] {
+        if let definedDefaultFilter = configuration!["pomodoro.defaultFilter"] {
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
         
@@ -308,6 +329,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return description
     }
     
+    func sync(aNotification: NSNotification) {
+        sync()
+    }
+    
+    func sync() {
+        let task = NSTask()
+        task.launchPath = taskPath
+        task.arguments = ["sync"]
+        task.launch()
+        task.waitUntilExit()
+    }
+    
     func stopActiveTask(aNotification: NSNotification) {
         stopActiveTask()
     }
@@ -344,7 +377,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func runPostCompletionHooks(taskId: String) {
-        if let postCompletionCommand = configuration!["postCompletionCommand"] {
+        if let postCompletionCommand = configuration!["pomodoro.postCompletionCommand"] {
             let errorPipe = NSPipe()
             let errorFile = errorPipe.fileHandleForReading
             
