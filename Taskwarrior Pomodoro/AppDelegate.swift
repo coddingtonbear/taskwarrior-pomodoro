@@ -23,11 +23,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var configuration: [String: String]? = nil
     let menu = NSMenu();
     var activeCountdownTimer: NSTimer? = nil
-    var pomodorosLogUUID: String?
     var currentPomodorosLogUUID: String?
     var pomsPerLongBreak: Int = 4
     var activeTaskPomodorosLogUUID: String?
     
+    let kPomodoroLogEntryDescription = "PomodoroLog"
     let kPomsLongBreakCharacter = "-"
     let kPomsPomDoneCharacter = "🍅"
     let kPomsActiveCharacter = "🍊"
@@ -237,7 +237,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func getTodaysPomodorosLog() -> JSON? {
-        let logFilter = ["status:Completed", "Pomodoro", "entry:today", "limit:1"]
+        let logFilter = ["status:Completed", kPomodoroLogEntryDescription, "entry:today", "limit:1"]
         let tasks = getTasksUsingFilter(logFilter)
         
         guard !tasks.isEmpty else {
@@ -250,17 +250,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func getTasksUsingFilter(filter: [String]) -> [JSON] {
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["rc.json.array=off"] + filter + ["export"]
+        let arguments = ["rc.json.array=off"] + filter + ["export"]
         
-        let pipe = NSPipe()
-        task.standardOutput = pipe
-        task.launch()
-        task.waitUntilExit()
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        let output = taskCommandWithResult(arguments)
         
         let taskListStrings = output.characters.split{$0 == "\n"}.map(String.init)
         
@@ -273,6 +265,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         
         return taskList;
+    }
+    
+    func createTodaysPomodorosLogEntry() -> String {
+        let arguments = ["log", kPomodoroLogEntryDescription]
+        let resultString = taskCommandWithResult(arguments)
+        
+        let parts = resultString.characters.split(" ").map(String.init)
+        if parts.count == 3 {
+            let taskId = parts[2].stringByTrimmingCharactersInSet(
+                NSCharacterSet.newlineCharacterSet()
+                ).stringByTrimmingCharactersInSet(
+                    NSCharacterSet.punctuationCharacterSet()
+            )
+            return taskId
+        }
+        
+        return ""
+    }
+    
+    func taskCommandWithResult(arguments: [String]) -> String {
+        let task = NSTask()
+        task.launchPath = taskPath
+        task.arguments = arguments
+        
+        let pipe = NSPipe()
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        
+        return output
+    }
+    
+    func taskCommand(arguments: [String]) {
+        let task = NSTask()
+        task.launchPath = taskPath
+        task.arguments = arguments
+
+        task.launch()
+        task.waitUntilExit()
     }
     
     func getPomodorosCountTitle() -> String? {
@@ -393,21 +427,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return "N/A"
         }
         
-        var description: String = ""
+        var description: String = "N/A"
         
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["rc.json.array=off", activeTaskId!, "export"]
+        let filter = [activeTaskId!, "limit:1"]
+        let tasks = getTasksUsingFilter(filter)
         
-        let pipe = NSPipe()
-        task.standardOutput = pipe
-        task.launch()
-        task.waitUntilExit()
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
-        if let dataFromString = output.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: true) {
-            let taskData = JSON(data: dataFromString)
+        if !tasks.isEmpty {
+            let taskData = tasks[0]
             if let thisDescription = taskData["description"].string {
                 description = thisDescription
             }
@@ -421,11 +447,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func sync() {
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["sync"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand(["sync"])
     }
     
     func stopActiveTask(aNotification: NSNotification) {
@@ -441,11 +463,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activeTimerEnds = nil;
         updateTaskTimer()
 
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = [activeTaskId!, "stop"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand([activeTaskId!, "stop"])
         
         activeTaskId = nil
         updateMenuItems()
@@ -454,12 +472,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func startTaskById(taskId: String) {
         activeTaskId = taskId
         
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = [taskId, "start"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand([taskId, "start"])
         activeTaskPomodorosLogUUID = currentPomodorosLogUUID
+        
+        if activeTaskPomodorosLogUUID == nil {
+            activeTaskPomodorosLogUUID = createTodaysPomodorosLogEntry()
+        }
         
         updateMenuItems()
     }
@@ -517,11 +535,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let uuid = taskId ?? ""
         
         if let logId = activeTaskPomodorosLogUUID {
-            let task = NSTask()
-            task.launchPath = taskPath
-            task.arguments = [logId, "annotate", "\"Pomodoro uuid:\(uuid)\""]
-            task.launch()
-            task.waitUntilExit()
+            taskCommand([logId, "annotate", "\"Pomodoro uuid:\(uuid)\""])
         }
     }
     
