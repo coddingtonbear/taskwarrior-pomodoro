@@ -30,6 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     
     let kPomsLongBreakCharacter = "-"
     let kPomsPomDoneCharacter = "🍅"
+    let kPomsActiveCharacter = "🍊"
 
     
     //MARK: Menu Items Tags -
@@ -275,22 +276,36 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func getPomodorosCountTitle() -> String? {
-        guard let log = getTodaysPomodorosLog() else {
-            return nil
+        var title = ""
+        var pomsDone = 0
+        var pomsActive = isActive() ? 1 : 0
+        
+        if let log = getTodaysPomodorosLog() {
+             pomsDone = log["annotations"].count
         }
         
-        let count = log["annotations"].count
-        var title = ""
+        let pomsToDraw = pomsDone + pomsActive
         
-        for i in 0..<count {
+        for i in 0..<pomsToDraw {
             if (i + 1) % pomsPerLongBreak == 1 && i != 0 {
                 title += kPomsLongBreakCharacter
             }
             
-            title += kPomsPomDoneCharacter
+            if pomsDone > 0 {
+                title += kPomsPomDoneCharacter
+                pomsDone -= 1
+            } else if pomsActive > 0 {
+                title += kPomsActiveCharacter
+                pomsActive -= 1
+            }
+            
         }
         
-        return title
+        return title.isEmpty ? nil : title
+    }
+    
+    func isActive() -> Bool {
+        return activeTaskId != nil
     }
     
     
