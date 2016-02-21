@@ -26,6 +26,8 @@ Note that taskwarrior filters can be quite complex (although my specific use of 
 
 ### Post-Pomodoro Hook
 
+* [Taskwarrior-Pomodoro-Beeminder](https://github.com/coddingtonbear/taskwarrior-pomodoro-beeminder) provides functionality allowing you to increment Beeminder goals using this "Post-Pomodoro Hook" functionality.
+
 You can configure Taskwarrior Pomodoro to call a script of your choice after you complete a Pomodoro.  The script will receive one additional command-line argument: the UUID of the task that you were working on.  You could use this for a variety of things, including updating goal-tracking software or recording billable hours.
 
 ```
