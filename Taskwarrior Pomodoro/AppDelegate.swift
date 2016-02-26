@@ -240,13 +240,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let logFilter = ["status:Completed", kPomodoroLogEntryDescription, "entry:today", "limit:1"]
         let tasks = getTasksUsingFilter(logFilter)
         
-        guard !tasks.isEmpty else {
-            return nil
-        }
-        
-        currentPomodorosLogUUID = tasks[0]["uuid"].string
-        
-        return tasks[0]
+        let task = tasks[safe: 0]
+        currentPomodorosLogUUID = task?["uuid"].string
+        return task
     }
     
     func getTasksUsingFilter(filter: [String]) -> [JSON] {
@@ -602,6 +598,12 @@ extension NSMenuItem {
         
         self.enabled = enabled
         self.tag = tag
+    }
+}
+
+extension Array {
+    subscript (safe index: Int) -> Element? {
+        return (0..<count).contains(index) ? self[index] : nil
     }
 }
 
