@@ -267,21 +267,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return taskList;
     }
     
-    func createTodaysPomodorosLogEntry() -> String {
+    func createTodaysPomodorosLogEntry() -> String? {
         let arguments = ["log", kPomodoroLogEntryDescription]
-        let resultString = taskCommandWithResult(arguments)
+        taskCommand(arguments)
         
-        let parts = resultString.characters.split(" ").map(String.init)
-        if parts.count == 3 {
-            let taskId = parts[2].stringByTrimmingCharactersInSet(
-                NSCharacterSet.newlineCharacterSet()
-                ).stringByTrimmingCharactersInSet(
-                    NSCharacterSet.punctuationCharacterSet()
-            )
-            return taskId
-        }
-        
-        return ""
+        let log = getTodaysPomodorosLog()
+        return log?["uuid"].string
     }
     
     func taskCommandWithResult(arguments: [String]) -> String {
