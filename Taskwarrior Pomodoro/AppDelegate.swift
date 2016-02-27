@@ -23,6 +23,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var configuration: [String: String]? = nil
     let menu = NSMenu();
     var activeCountdownTimer: NSTimer? = nil
+    var currentPomodorosLogUUID: String?
+    var pomsPerLongBreak: Int = 4
+    var activeTaskPomodorosLogUUID: String?
+    
+    let kPomodoroLogEntryDescription = "PomodoroLog"
+    let kPomsLongBreakCharacter = "-"
+    let kPomsPomDoneCharacter = "🍅"
+    let kPomsActiveCharacter = "🍊"
 
     
     //MARK: Menu Items Tags -
@@ -36,6 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let kQuitMenuItemTag = 8;
     let kSyncSeparatorMenuItemTag = 7;
     let kSyncMenuItemTag = 9;
+    let kPomodorosCountMenuItemTag = 10
     
     //MARK: Menu Items Titles -
     let kStopTitleFormat = "Stop (%02u:%02u remaining)"
@@ -96,10 +105,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func updateMenuItems() {
+        setupStatsMenuItems()
         setupActiveTaskMenuItem()
         setupSyncMenuItem()
         setupQuitMenuItem()
         setupTaskListMenuItems()
+    }
+    
+    func setupStatsMenuItems() {
+        let pomodoros = getPomodorosCountMenuItem()
+        
+        if let title = getPomodorosCountTitle() {
+            pomodoros.hidden = false
+            pomodoros.title = title
+        } else {
+            pomodoros.hidden = true
+        }
     }
     
     func setupActiveTaskMenuItem() {
@@ -218,17 +239,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
         
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["rc.json.array=off"] + pendingArguments + ["export"]
+        return getTasksUsingFilter(pendingArguments)
+    }
+    
+    func getTodaysPomodorosLog() -> JSON? {
+        let logFilter = ["status:Completed", kPomodoroLogEntryDescription, "entry:today", "limit:1"]
+        let tasks = getTasksUsingFilter(logFilter)
         
-        let pipe = NSPipe()
-        task.standardOutput = pipe
-        task.launch()
-        task.waitUntilExit()
+        let task = tasks[safe: 0]
+        currentPomodorosLogUUID = task?["uuid"].string
+        return task
+    }
+    
+    func getTasksUsingFilter(filter: [String]) -> [JSON] {
+        let arguments = ["rc.json.array=off"] + filter + ["export"]
         
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        let output = taskCommandWithResult(arguments)
         
         let taskListStrings = output.characters.split{$0 == "\n"}.map(String.init)
         
@@ -242,6 +268,73 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         return taskList;
     }
+    
+    func createTodaysPomodorosLogEntry() -> String? {
+        let arguments = ["log", kPomodoroLogEntryDescription]
+        taskCommand(arguments)
+        
+        let log = getTodaysPomodorosLog()
+        return log?["uuid"].string
+    }
+    
+    func taskCommandWithResult(arguments: [String]) -> String {
+        let task = NSTask()
+        task.launchPath = taskPath
+        task.arguments = arguments
+        
+        let pipe = NSPipe()
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        
+        return output
+    }
+    
+    func taskCommand(arguments: [String]) {
+        let task = NSTask()
+        task.launchPath = taskPath
+        task.arguments = arguments
+
+        task.launch()
+        task.waitUntilExit()
+    }
+    
+    func getPomodorosCountTitle() -> String? {
+        var title = ""
+        var pomsDone = 0
+        var pomsActive = isActive() ? 1 : 0
+        
+        if let log = getTodaysPomodorosLog() {
+             pomsDone = log["annotations"].count
+        }
+        
+        let pomsToDraw = pomsDone + pomsActive
+        
+        for i in 0..<pomsToDraw {
+            if (i + 1) % pomsPerLongBreak == 1 && i != 0 {
+                title += kPomsLongBreakCharacter
+            }
+            
+            if pomsDone > 0 {
+                title += kPomsPomDoneCharacter
+                pomsDone -= 1
+            } else if pomsActive > 0 {
+                title += kPomsActiveCharacter
+                pomsActive -= 1
+            }
+            
+        }
+        
+        return title.isEmpty ? nil : title
+    }
+    
+    func isActive() -> Bool {
+        return activeTaskId != nil
+    }
+    
     
     func clearOldTasks() {
         while let item = menu.itemWithTag(kPendingTaskMenuItemTag) {
@@ -300,6 +393,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return activeItem
     }
     
+    func getPomodorosCountMenuItem() -> NSMenuItem {
+        if let item = menu.itemWithTag(kPomodorosCountMenuItemTag) {
+            return item
+        }
+        
+        let pomsItem = NSMenuItem(
+            title: "",
+            enabled: false,
+            tag: kPomodorosCountMenuItemTag
+        )
+        
+        menu.addItem(pomsItem)
+        return pomsItem
+    }
+    
     func separatorWithTag(tag: Int) -> NSMenuItem {
         let separator = NSMenuItem.separatorItem()
         separator.tag = tag
@@ -312,21 +420,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return "N/A"
         }
         
-        var description: String = ""
+        var description: String = "N/A"
         
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["rc.json.array=off", activeTaskId!, "export"]
+        let filter = [activeTaskId!, "limit:1"]
+        let tasks = getTasksUsingFilter(filter)
         
-        let pipe = NSPipe()
-        task.standardOutput = pipe
-        task.launch()
-        task.waitUntilExit()
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
-        if let dataFromString = output.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: true) {
-            let taskData = JSON(data: dataFromString)
+        if !tasks.isEmpty {
+            let taskData = tasks[0]
             if let thisDescription = taskData["description"].string {
                 description = thisDescription
             }
@@ -340,11 +440,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func sync() {
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = ["sync"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand(["sync"])
     }
     
     func stopActiveTask(aNotification: NSNotification) {
@@ -360,11 +456,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activeTimerEnds = nil;
         updateTaskTimer()
 
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = [activeTaskId!, "stop"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand([activeTaskId!, "stop"])
         
         activeTaskId = nil
         updateMenuItems()
@@ -373,11 +465,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func startTaskById(taskId: String) {
         activeTaskId = taskId
         
-        let task = NSTask()
-        task.launchPath = taskPath
-        task.arguments = [taskId, "start"]
-        task.launch()
-        task.waitUntilExit()
+        taskCommand([taskId, "start"])
+        activeTaskPomodorosLogUUID = currentPomodorosLogUUID
+        
+        if activeTaskPomodorosLogUUID == nil {
+            activeTaskPomodorosLogUUID = createTodaysPomodorosLogEntry()
+        }
         
         updateMenuItems()
     }
@@ -421,6 +514,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let taskId = activeTaskId;
 
         stopActiveTask()
+        logPomodoroForTaskDone(taskId)
 
         let alert:NSAlert = NSAlert();
         alert.messageText = "Break time!";
@@ -428,6 +522,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.runModal();
 
         runPostCompletionHooks(taskId!)
+    }
+    
+    func logPomodoroForTaskDone(taskId: String?) {
+        let uuid = taskId ?? ""
+        
+        if let logId = activeTaskPomodorosLogUUID {
+            taskCommand([logId, "annotate", "\"Pomodoro uuid:\(uuid)\""])
+        }
     }
     
     func setActiveTask(sender: AnyObject) {
@@ -489,6 +591,25 @@ extension NSDate {
         if minutesFrom(date) > 0 { return "\(minutesFrom(date))m" }
         if secondsFrom(date) > 0 { return "\(secondsFrom(date))s" }
         return ""
+    }
+}
+
+extension NSMenuItem {
+    convenience init(title: String, enabled: Bool, tag: NSInteger) {
+        self.init(
+            title: title,
+            action: "",
+            keyEquivalent: ""
+        )
+        
+        self.enabled = enabled
+        self.tag = tag
+    }
+}
+
+extension Array {
+    subscript (safe index: Int) -> Element? {
+        return (0..<count).contains(index) ? self[index] : nil
     }
 }
 
