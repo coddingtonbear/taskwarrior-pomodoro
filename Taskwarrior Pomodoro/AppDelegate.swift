@@ -19,7 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var activeTimer: NSTimer? = nil
     var activeTimerEnds: NSDate? = nil
     var activeMenuItem: NSMenuItem? = nil
-    var pomodoroDuration:Double = 60 * 25
+    var pomodoroDuration: Double = 60 * 25
     var configuration: [String: String]? = nil
     let menu = NSMenu();
     var activeCountdownTimer: NSTimer? = nil
@@ -536,6 +536,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         startTaskById(sender.representedObject as! String)
         
+        if let configuredPomodoroDuration = configuration!["pomodoro.durationSeconds"] {
+            if let configuredPomodoroDurationAsDouble = Double(configuredPomodoroDuration) {
+                pomodoroDuration = configuredPomodoroDurationAsDouble
+            }
+        }
+
         activeTimer = NSTimer.scheduledTimerWithTimeInterval(
             pomodoroDuration,
             target: self,

@@ -10,7 +10,7 @@ You can [download the latest release here](http://coddingtonbear-public.s3.amazo
 
 ## Configuration 
 
-Although very little configuration is currently provided, you can configure Taskwarrior Pomodoro by adding lines to your `~/.taskrc` file. 
+Configuring Taskwarrior Pomodoro is handled by adding lines to your `~/.taskrc` file.  See below for what features you can configure.
 
 ### Task List Filter
 
@@ -32,4 +32,12 @@ You can configure Taskwarrior Pomodoro to call a script of your choice after you
 
 ```
 pomodoro.postCompletionCommand=/path/to/my/script
+```
+
+### Pomodoro Duration
+
+By default, Taskwarrior Pomodoro uses standard 25-minute (1,500 second) pomodoros.  You can override the default duration by adding a setting named ``pomodoro.durationSeconds`` setting the number of seconds you'd like a pomodoro to last.  For example; to set your pomodoros to last 45 minutes (2,700 seconds), you could set this setting as follows:
+
+```
+pomodoro.durationSeconds=2700
 ```
