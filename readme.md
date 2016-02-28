@@ -34,6 +34,14 @@ You can configure Taskwarrior Pomodoro to call a script of your choice after you
 pomodoro.postCompletionCommand=/path/to/my/script
 ```
 
+### Pomodoro Counter
+
+By default, Taskwarrior Pomodoro will display a running count of Pomodoros completed during each day.  If you'd like to disable the display of this running count, you can turn it off by setting the ``pomodoro.displayCount`` setting to ``false``:
+
+```
+pomodoro.displayCount=false
+```
+
 ### Pomodoro Duration
 
 By default, Taskwarrior Pomodoro uses standard 25-minute (1,500 second) pomodoros.  You can override the default duration by adding a setting named ``pomodoro.durationSeconds`` setting the number of seconds you'd like a pomodoro to last.  For example; to set your pomodoros to last 45 minutes (2,700 seconds), you could set this setting as follows:

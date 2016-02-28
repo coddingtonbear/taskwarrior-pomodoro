@@ -304,6 +304,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var title = ""
         var pomsDone = 0
         var pomsActive = isActive() ? 1 : 0
+       
+        // Allow users to disable the pomodoro count display
+        if let countDisplayString = configuration!["pomodoro.displayCount"] {
+            if let countDisplay = countDisplayString.toBool() {
+                if countDisplay == false {
+                    return nil;
+                }
+            }
+        }
         
         if let log = getTodaysPomodorosLog() {
              pomsDone = log["annotations"].count
@@ -614,6 +623,19 @@ extension NSMenuItem {
 extension Array {
     subscript (safe index: Int) -> Element? {
         return (0..<count).contains(index) ? self[index] : nil
+    }
+}
+
+extension String {
+    func toBool() -> Bool? {
+        switch self {
+        case "True", "true", "yes", "1":
+            return true
+        case "False", "false", "no", "0":
+            return false
+        default:
+            return nil
+        }
     }
 }
 
