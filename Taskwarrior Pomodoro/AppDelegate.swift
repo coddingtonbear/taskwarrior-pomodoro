@@ -57,10 +57,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         if let button = statusItem.button {
             #if DEBUG
-                print("IN DEBUG MODE")
                 button.image = NSImage(named: "StatusBarButtonImageDevelopment")
             #else
-                print("NOT IN DEBUG MODE")
                 button.image = NSImage(named: "StatusBarButtonImage")
             #endif
             button.action = Selector("printQuote:")
