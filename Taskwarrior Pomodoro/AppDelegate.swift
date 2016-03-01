@@ -8,6 +8,10 @@
 
 import Cocoa
 
+
+let NSAlternateKeyMask = 1 << 19
+
+
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @IBOutlet weak var window: NSWindow!
@@ -359,6 +363,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             action: Selector("stopActiveTask:"),
             keyEquivalent: "s"
         )
+        stopItem.keyEquivalentModifierMask = NSAlternateKeyMask
         stopItem.tag = kStopTaskMenuItemTag
         menu.addItem(stopItem)
         
