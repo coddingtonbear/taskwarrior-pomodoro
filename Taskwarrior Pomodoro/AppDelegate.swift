@@ -235,13 +235,87 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func getPendingTasks() -> [JSON] {
+        let pendingArguments = getPendingArguments()
+        
+        var tasks = getTasksUsingFilter(pendingArguments)
+        tasks = getSortedTasks(tasks);
+        
+        return tasks
+    }
+    
+    func getPendingArguments() -> [String] {
         var pendingArguments = ["status:Pending"]
         
         if let definedDefaultFilter = configuration!["pomodoro.defaultFilter"] {
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
         
-        return getTasksUsingFilter(pendingArguments)
+        return pendingArguments
+    }
+    
+    func getSortedTasks(tasks: [JSON]) -> [JSON] {
+        var sortedTasks = tasks
+        
+        if let sortList = configuration!["pomodoro.default.sort"] {
+            sortedTasks = sortTasks(sortedTasks, withList: sortList)
+        }
+        
+        return sortedTasks
+    }
+    
+    func sortTasks(tasks: [JSON], withList list: String) -> [JSON]{
+        let theList = processSortingList(list)
+        
+        let sortedTasks = tasks.sort {
+            var sorted: Bool = false
+            
+            for (field, ascending) in theList {
+                if $0[field].type == .Null &&  $1[field].type == .Null {continue}
+                if $0[field] == $1[field] {continue}
+                if $1[field].type == .Null {sorted = !ascending; break}
+                if $0[field].type == .Null {sorted = ascending; break}
+                
+                if (ascending) {
+                    sorted = $0[field] < $1[field]; break
+                } else {
+                    sorted = $0[field] > $1[field]; break
+                }
+            }
+            
+            return sorted
+        }
+        
+        return sortedTasks
+    }
+    
+    func processSortingList(list: String) -> [(String, Bool)] {
+        var processedList = [(String, Bool)]()
+        
+        let rawList = list.characters.split(",").map(String.init)
+        for element in rawList {
+            processedList.append(processSortFilter(element))
+        }
+        
+        return processedList
+    }
+    
+    func processSortFilter(sort: String) -> (String, Bool) {
+        var sortAscending = true
+        
+        let noSolidus = sort.stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: "\\/"))
+        
+        switch (noSolidus.characters.last!) {
+        case "+":
+            sortAscending = true
+        case "-":
+            sortAscending = false
+        default:
+            sortAscending = true
+        }
+        
+        let trimmedSort = noSolidus.stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: "+-"))
+        
+        return (trimmedSort, sortAscending)
     }
     
     func getTodaysPomodorosLog() -> JSON? {
