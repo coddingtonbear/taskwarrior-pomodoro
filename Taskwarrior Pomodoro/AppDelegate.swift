@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import Darwin
 
 
 let NSAlternateKeyMask = 1 << 19
@@ -58,6 +59,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application
+
         let fileManager = NSFileManager.defaultManager()
         var pathOptions = [
             "/usr/local/bin/task",
@@ -65,7 +67,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             "/opt/local/bin/task",
         ]
         
-        configuration = getConfigurationSettings()
+        do {
+            configuration = try getConfigurationSettings()
+        }
+        catch FileError.FileNotFound(let file_path) {
+            print("File '\(file_path)' not found")
+            exit(1)
+        }
+        catch FileError.FileEmpty {
+            print("taskrc config file is empty")
+            exit(1)
+        }
+        catch is ErrorType {
+            print("Unexpected error!")
+            exit(1)
+        }
 
         if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
             pathOptions = [configuredPath]
@@ -83,7 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 "Could not find taskwarrior in \(pathOptionsString)"
             )
         }
-        
+
         if let button = statusItem.button {
             #if DEBUG
                 button.image = NSImage(named: "StatusBarButtonImageDevelopment")
@@ -224,10 +240,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
     
-    func getConfigurationSettings(path: String = "~/.taskrc") -> [String: String] {
+    enum FileError: ErrorType {
+        case FileNotFound(file_path: NSString)
+        case FileEmpty
+    }
+    
+    func getConfigurationSettings(path: String = "~/.taskrc") throws -> [String: String] {
         var configurationSettings = [String: String]()
         
         let location = NSString(string: path).stringByExpandingTildeInPath
+        let fileManager = NSFileManager.defaultManager()
+        if !fileManager.fileExistsAtPath(location) {
+            throw FileError.FileNotFound(file_path: location)
+        }
         let fileContent = try? NSString(contentsOfFile: location, encoding: NSUTF8StringEncoding) as String
         let fileContentLines = fileContent?.characters.split{$0 == "\n"}.map(String.init)
         
@@ -242,8 +267,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 var pathLine = line;
                 let prefixRange = line.startIndex..<line.startIndex.advancedBy(8)
                 pathLine.removeRange(prefixRange)
-                for (k, v) in getConfigurationSettings(pathLine) {
-                    configurationSettings[k] = v
+                do {
+                    for (k, v) in try getConfigurationSettings(pathLine) {
+                        configurationSettings[k] = v
+                    }
+                }
+                catch FileError.FileNotFound(let file_path) {
+                    print("File '\(file_path)' not found")
+                }
+                catch FileError.FileEmpty {
+                    //ignore
                 }
             } else if equalIndex != nil {
                 let configurationKey = line.substringWithRange(
@@ -255,7 +288,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 configurationSettings[configurationKey] = configurationValue
             }
         }
-        
+        if configurationSettings.count == 0 {
+            throw FileError.FileEmpty
+        }
         return configurationSettings
     }
     
