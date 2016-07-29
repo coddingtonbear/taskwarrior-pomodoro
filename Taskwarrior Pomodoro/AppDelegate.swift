@@ -11,13 +11,14 @@ import Cocoa
 
 let NSAlternateKeyMask = 1 << 19
 
-
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @IBOutlet weak var window: NSWindow!
     
+    // Leave for later detections
+    var taskPath = ""
     //MARK: Attributes -
-    let taskPath = "/usr/local/bin/task"
+    
     let statusItem = NSStatusBar.systemStatusBar().statusItemWithLength(NSSquareStatusItemLength)
     var activeTaskId: String? = nil
     var activeTimer: NSTimer? = nil
@@ -57,6 +58,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application
+        
+        let fileManager = NSFileManager.defaultManager()
+        if fileManager.fileExistsAtPath("/usr/local/bin/task") {
+            taskPath = "/usr/local/bin/task"
+        } else if fileManager.fileExistsAtPath("/opt/local/bin/task") {
+            taskPath = "/opt/local/bin/task"
+        }
+        if taskPath == "" {
+            fatalError("Could not find task in either /usr/local/bin or /opt/local/bin")
+        }
         configuration = getConfigurationSettings()
         
         if let button = statusItem.button {
