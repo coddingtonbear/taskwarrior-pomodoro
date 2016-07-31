@@ -12,6 +12,14 @@ You can [download the latest release here](http://coddingtonbear-public.s3.amazo
 
 Configuring Taskwarrior Pomodoro is handled by adding lines to your `~/.taskrc` file.  See below for what features you can configure.
 
+### Taskwarrior Application Path
+
+Taskwarrior-pomodoro relies on your local installation of Taskwarrior for interacting with your task list.  It will search in several common places for the `task` app, but if you would like to override the path it selects by default or have installed `task` into an uncommon location, you can override it by setting the key `pomodoro.taskwarrior_path` in your `~/.taskrc`.
+
+```
+pomodoro.taskwarrior_path=/path/to/task
+```
+
 ### Task List Filter
 
 By default, the list of tasks is limited to displaying only tasks that are currently pending (`status:pending`), but you can specify any filter you'd like for further reducing that list by setting the key `pomodoro.defaultFilter` in your `~/.taskrc`.
