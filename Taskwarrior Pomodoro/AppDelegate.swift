@@ -58,17 +58,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application
-        
         let fileManager = NSFileManager.defaultManager()
-        if fileManager.fileExistsAtPath("/usr/local/bin/task") {
-            taskPath = "/usr/local/bin/task"
-        } else if fileManager.fileExistsAtPath("/opt/local/bin/task") {
-            taskPath = "/opt/local/bin/task"
+        var pathOptions = [
+            "/usr/local/bin/task",
+            "/usr/bin/task",
+            "/opt/local/bin/task",
+        ]
+        
+        configuration = getConfigurationSettings()
+
+        if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
+            pathOptions = [configuredPath]
+        }
+
+        for pathOption in pathOptions {
+            if fileManager.fileExistsAtPath(pathOption) {
+                taskPath = pathOption
+                break
+            }
         }
         if taskPath == "" {
-            fatalError("Could not find task in either /usr/local/bin or /opt/local/bin")
+            let pathOptionsString = pathOptions.joinWithSeparator(", ")
+            fatalError(
+                "Could not find taskwarrior in \(pathOptionsString)"
+            )
         }
-        configuration = getConfigurationSettings()
         
         if let button = statusItem.button {
             #if DEBUG
