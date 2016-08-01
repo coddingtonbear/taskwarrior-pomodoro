@@ -58,15 +58,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
-        // Insert code here to initialize your application
-
-        let fileManager = NSFileManager.defaultManager()
-        var pathOptions = [
-            "/usr/local/bin/task",
-            "/usr/bin/task",
-            "/opt/local/bin/task",
-        ]
-        
         do {
             configuration = try getConfigurationSettings()
         }
@@ -87,7 +78,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             alert.runModal();
             exit(1);
         }
-
+        
+        let fileManager = NSFileManager.defaultManager()
+        var pathOptions = [
+            "/usr/local/bin/task",
+            "/usr/bin/task",
+            "/opt/local/bin/task",
+            ]
         if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
             pathOptions = [configuredPath]
         }
