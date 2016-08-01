@@ -71,16 +71,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             configuration = try getConfigurationSettings()
         }
         catch FileError.FileNotFound(let file_path) {
-            print("File '\(file_path)' not found")
-            exit(1)
+            let alert:NSAlert = NSAlert();
+            alert.messageText = "Configuration file not found";
+            alert.informativeText = "Your taskwarrior configuration file could not be found at \(file_path).";
+            alert.runModal();
+            exit(1);
         }
         catch FileError.FileEmpty {
-            print("taskrc config file is empty")
-            exit(1)
+            // This is probably fine
         }
         catch is ErrorType {
-            print("Unexpected error!")
-            exit(1)
+            let alert:NSAlert = NSAlert();
+            alert.messageText = "Unexpected error";
+            alert.informativeText = "An error was encountered while loading your configuration.";
+            alert.runModal();
+            exit(1);
         }
 
         if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
