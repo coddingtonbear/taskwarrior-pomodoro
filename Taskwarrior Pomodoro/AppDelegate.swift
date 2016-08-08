@@ -32,6 +32,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     var currentPomodorosLogUUID: String?
     var pomsPerLongBreak: Int = 4
     var activeTaskPomodorosLogUUID: String?
+    var pendingTasksMtime: NSDate? = nil
+    var pendingTasks: [JSON] = []
     
     let kPomodoroLogEntryDescription = "PomodoroLog"
     let kPomsLongBreakCharacter = "-"
@@ -115,6 +117,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         
         menu.delegate = self
         statusItem.menu = menu
+
+        refreshPendingTasks()
     }
     
     func userNotificationCenter(center: NSUserNotificationCenter, shouldPresentNotification notification: NSUserNotification) -> Bool {
@@ -306,14 +310,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         }
         return configurationSettings
     }
+
+    func pendingTasksAreOutOfDate() -> Bool {
+        let fileManager = NSFileManager.defaultManager()
+
+        if let dataLocation = configuration!["data.location"] {
+            let path = NSString(string: dataLocation + "/pending.data").stringByExpandingTildeInPath
+            let attrs: NSDictionary
+            do {
+                attrs = try fileManager.attributesOfItemAtPath(path)
+            } catch _ {
+                print("Error encountered getting attributes of pending.data")
+                return true
+            }
+            let modificationDate = attrs[NSFileModificationDate] as! NSDate
+
+
+            if pendingTasksMtime == nil || pendingTasksMtime!.compare(modificationDate) == NSComparisonResult.OrderedAscending {
+                pendingTasksMtime = modificationDate
+                return true
+            }
+            return false
+        }
+
+        return true
+    }
     
     func getPendingTasks() -> [JSON] {
-        let pendingArguments = getPendingArguments()
+        if pendingTasksAreOutOfDate() {
+            refreshPendingTasks()
+        }
         
+        return pendingTasks
+    }
+
+    func refreshPendingTasks() {
+        let pendingArguments = getPendingArguments()
         var tasks = getTasksUsingFilter(pendingArguments)
         tasks = getSortedTasks(tasks);
-        
-        return tasks
+
+        pendingTasks = tasks
     }
     
     func getPendingArguments() -> [String] {
