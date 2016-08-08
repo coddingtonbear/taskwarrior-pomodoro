@@ -13,7 +13,7 @@ import Darwin
 let NSAlternateKeyMask = 1 << 19
 
 @NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotificationCenterDelegate {
     @IBOutlet weak var window: NSWindow!
     
     // Leave for later detections
@@ -58,6 +58,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(aNotification: NSNotification) {
+        NSUserNotificationCenter.defaultUserNotificationCenter().delegate = self
+
         do {
             configuration = try getConfigurationSettings()
         }
@@ -113,6 +115,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         menu.delegate = self
         statusItem.menu = menu
+    }
+    
+    func userNotificationCenter(center: NSUserNotificationCenter, shouldPresentNotification notification: NSUserNotification) -> Bool {
+        return true
+    }
+    
+    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
+        let taskId = notification.userInfo!["taskId"] as! String
+        setActiveTask(taskId)
     }
     
     //MARK: NSMenuDelegate -
@@ -230,7 +241,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if let uuid = task["uuid"].string {
                     let menuItem = NSMenuItem(
                         title: description,
-                        action: Selector("setActiveTask:"),
+                        action: Selector("setActiveTaskViaMenu:"),
                         keyEquivalent: ""
                     )
                     menuItem.representedObject = uuid
@@ -663,11 +674,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         stopActiveTask()
         logPomodoroForTaskDone(taskId)
-
-        let alert:NSAlert = NSAlert();
-        alert.messageText = "Break time!";
-        alert.informativeText = "Taskwarrior Pomodoro";
-        alert.runModal();
+        
+        // create a User Notification
+        let notification = NSUserNotification.init()
+        notification.title = "Break time!"
+        notification.informativeText = "You've completed your pomodoro."
+        notification.userInfo = ["taskId" : taskId!]
+        notification.soundName = NSUserNotificationDefaultSoundName
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Start Another"
+        
+        // Deliver the notification through the User Notification Center
+        NSUserNotificationCenter.defaultUserNotificationCenter().deliverNotification(notification)
 
         runPostCompletionHooks(taskId!)
     }
@@ -680,11 +698,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
     
-    func setActiveTask(sender: AnyObject) {
+    func setActiveTask(taskId: String) {
         if activeTaskId != nil{
             stopActiveTask()
         }
-        startTaskById(sender.representedObject as! String)
+        startTaskById(taskId)
         
         if let configuredPomodoroDuration = configuration!["pomodoro.durationSeconds"] {
             if let configuredPomodoroDurationAsDouble = Double(configuredPomodoroDuration) {
@@ -702,6 +720,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         let now = NSDate()
         activeTimerEnds = now.dateByAddingTimeInterval(pomodoroDuration);
+    }
+    
+    func setActiveTaskViaMenu(sender: AnyObject) {
+        setActiveTask(sender.representedObject as! String)
     }
     
     func updateTaskTimer() {
