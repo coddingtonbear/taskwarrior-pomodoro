@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activeCountdownTimer = nil
     }
     
-    func updateMenuItems(_ aNotification: Notification){
+    func updateMenuItems(_ sender: Any){
         updateMenuItems()
     }
     
@@ -423,7 +423,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return description
     }
     
-    @objc func sync(_ aNotification: Notification) {
+    @objc func sync(_ sender: Any) {
         sync()
     }
     
@@ -431,7 +431,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         taskCommand(["sync"])
     }
     
-    @objc func stopActiveTask(_ aNotification: Notification) {
+    @objc func stopActiveTask(_ sender: Any) {
         stopActiveTask()
     }
     
