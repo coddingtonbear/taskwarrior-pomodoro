@@ -67,7 +67,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 #endif
             }()
             
-            button.image = NSImage(named: imageName)
+            button.image = NSImage(named: NSImage.Name(rawValue: imageName))
         }
         
         menu.delegate = self
@@ -90,7 +90,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard activeTimerEnds != nil else { return }
         
         activeCountdownTimer = Timer(timeInterval: 1.0, repeats: true) { _ in self.updateTaskTimer() }
-        RunLoop.current.add(activeCountdownTimer!, forMode: .eventTracking)
+        RunLoop.current.add(activeCountdownTimer!, forMode: .eventTrackingRunLoopMode)
     }
     
     func stopCountdownTimer() {
@@ -532,7 +532,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         activeTimer = Timer(timeInterval: pomodoroDuration, repeats: false) { _ in self.timerExpired() }
-        RunLoop.current.add(activeTimer!, forMode: .default)
+        RunLoop.current.add(activeTimer!, forMode: .defaultRunLoopMode)
         
         let now = Date()
         activeTimerEnds = now.addingTimeInterval(pomodoroDuration);
