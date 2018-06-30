@@ -18,13 +18,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     
     //MARK: Attributes -
     let taskPath = "/usr/local/bin/task"
-    let statusItem = NSStatusBar.system().statusItem(withLength: NSSquareStatusItemLength)
+    let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     var activeTaskId: String? = nil
     var activeTimer: Timer? = nil
     var activeTimerEnds: Date? = nil
     var activeMenuItem: NSMenuItem? = nil
     var pomodoroDuration: Double = 60 * 25
-    var configuration: [String: String]? = nil
+    var configuration = [String: String]()
     let menu = NSMenu();
     var activeCountdownTimer: Timer? = nil
     var currentPomodorosLogUUID: String?
@@ -56,15 +56,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     //MARK: NSApplicationDelegate -
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Insert code here to initialize your application
         configuration = getConfigurationSettings()
         
         if let button = statusItem.button {
-            #if DEBUG
-                button.image = NSImage(named: "StatusBarButtonImageDevelopment")
-            #else
-                button.image = NSImage(named: "StatusBarButtonImage")
-            #endif
+            let imageName = { () -> String in
+                #if DEBUG
+                    return "StatusBarButtonImageDevelopment"
+                #else
+                    return "StatusBarButtonImage"
+                #endif
+            }()
+            
+            button.image = NSImage(named: imageName)
         }
         
         menu.delegate = self
@@ -84,16 +87,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     
     //MARK: API -
     func startCountdownTimer() {
-        if activeTimerEnds != nil {
-            activeCountdownTimer = Timer(
-                timeInterval: 1.0,
-                target: self,
-                selector: #selector(AppDelegate.updateTaskTimer),
-                userInfo: nil,
-                repeats: true
-            )
-            RunLoop.current.add(self.activeCountdownTimer!, forMode: RunLoopMode.eventTrackingRunLoopMode)
-        }
+        guard activeTimerEnds != nil else { return }
+        
+        activeCountdownTimer = Timer(timeInterval: 1.0, repeats: true) { _ in self.updateTaskTimer() }
+        RunLoop.current.add(activeCountdownTimer!, forMode: .eventTracking)
     }
     
     func stopCountdownTimer() {
@@ -146,14 +143,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func setupSyncMenuItem() {
-        guard menu.item(withTag: kSyncMenuItemTag) == nil else {
-            return
-        }
+        guard menu.item(withTag: kSyncMenuItemTag) == nil else { return }
         
-        var hidden = true;
-        if configuration!["taskd.server"] != nil {
-            hidden = false;
-        }
+        let hidden = configuration["taskd.server"] == nil;
         
         let syncSeparator = separatorWithTag(kSyncSeparatorMenuItemTag)
         syncSeparator.isHidden = hidden;
@@ -165,13 +157,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func setupQuitMenuItem() {
-        guard menu.item(withTag: kQuitMenuItemTag) == nil else {
-            return
-        }
+        guard menu.item(withTag: kQuitMenuItemTag) == nil else { return }
         
         _ = separatorWithTag(kQuitSeparatorMenuItemTag)
         
-        let quitMenuItem = NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: #selector(AppDelegate.exitNow(_:)), keyEquivalent: "q")
+        let quitMenuItem = NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: #selector(AppDelegate.exitNow), keyEquivalent: "q")
         quitMenuItem.tag = kQuitMenuItemTag
         menu.addItem(quitMenuItem)
     }
@@ -202,20 +192,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var configurationSettings = [String: String]()
         
         let location = NSString(string: path).expandingTildeInPath
-        let fileContent = try? NSString(contentsOfFile: location, encoding: String.Encoding.utf8.rawValue) as String
-        let fileContentLines = fileContent?.characters.split{$0 == "\n"}.map(String.init)
+        guard let fileContent = try? String(contentsOfFile: location, encoding: .utf8) else { return configurationSettings }
+        let fileContentLines = fileContent.split(separator: "\n").map(String.init)
         
-        for line in fileContentLines! {
+        for line in fileContentLines {
             if line.hasPrefix("include ") {
-                var pathLine = line;
-                let prefixRange = line.startIndex..<line.characters.index(line.startIndex, offsetBy: 8)
-                pathLine.removeSubrange(prefixRange)
+                let pathLine = String(line[line.index(line.startIndex, offsetBy: 8)...])
                 for (k, v) in getConfigurationSettings(pathLine) {
                     configurationSettings[k] = v
                 }
-            } else if let equalIndex = line.characters.index(of: "=" as Character) {
-                let configurationKey = line.substring(with: (line.startIndex ..< equalIndex) ).trimmingCharacters(in: CharacterSet.whitespaces)
-                let configurationValue = line.substring(from: equalIndex).trimmingCharacters(in: CharacterSet.whitespaces)
+            } else if let equalIndex = line.index(of: "=" as Character) {
+                let configurationKey = line[line.startIndex ..< equalIndex].trimmingCharacters(in: .whitespaces)
+                let configurationValue = line[line.index(after: equalIndex)...].trimmingCharacters(in: .whitespaces)
                 configurationSettings[configurationKey] = configurationValue
             }
         }
@@ -224,9 +212,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func getPendingTasks() -> [JSON] {
-        var pendingArguments = ["status:Pending"]
+        var pendingArguments = ["-ACTIVE", "status:Pending"]
         
-        if let definedDefaultFilter = configuration!["pomodoro.defaultFilter"] {
+        if let definedDefaultFilter = configuration["pomodoro.defaultFilter"] {
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
         
@@ -247,15 +235,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         let output = taskCommandWithResult(arguments)
         
-        let taskListStrings = output.characters.split{$0 == "\n"}.map(String.init)
+        let taskListStrings = output.split(separator: "\n").map(String.init)
         
-        var taskList = [JSON]()
-        for taskListString in taskListStrings {
-            if let dataFromString = taskListString.data(using: String.Encoding.utf8, allowLossyConversion: true) {
-                let taskData = JSON(data: dataFromString)
-                taskList.append(taskData)
+        let taskList = taskListStrings.map { (string) -> JSON in
+            if let dataFromString = string.data(using: .utf8, allowLossyConversion: true) {
+                return (try? JSON(data: dataFromString)) ?? JSON.null
             }
-        }
+            return JSON.null
+        }.filter { $0 != JSON.null }
         
         return taskList;
     }
@@ -299,7 +286,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var pomsActive = isActive() ? 1 : 0
        
         // Allow users to disable the pomodoro count display
-        if let countDisplayString = configuration!["pomodoro.displayCount"] {
+        if let countDisplayString = configuration["pomodoro.displayCount"] {
             if let countDisplay = countDisplayString.toBool() {
                 if countDisplay == false {
                     return nil;
@@ -352,7 +339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             action: #selector(AppDelegate.stopActiveTask(_:)),
             keyEquivalent: "s"
         )
-        stopItem.keyEquivalentModifierMask = NSEventModifierFlags(rawValue: UInt(NSAlternateKeyMask))
+        stopItem.keyEquivalentModifierMask = NSEvent.ModifierFlags(rawValue: UInt(NSAlternateKeyMask))
         stopItem.tag = kStopTaskMenuItemTag
         menu.addItem(stopItem)
         
@@ -436,7 +423,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return description
     }
     
-    func sync(_ aNotification: Notification) {
+    @objc func sync(_ aNotification: Notification) {
         sync()
     }
     
@@ -444,7 +431,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         taskCommand(["sync"])
     }
     
-    func stopActiveTask(_ aNotification: Notification) {
+    @objc func stopActiveTask(_ aNotification: Notification) {
         stopActiveTask()
     }
     
@@ -477,7 +464,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     
     func runPostCompletionHooks(_ taskId: String) {
-        if let postCompletionCommand = configuration!["pomodoro.postCompletionCommand"] {
+        if let postCompletionCommand = configuration["pomodoro.postCompletionCommand"] {
             let errorPipe = Pipe()
             let errorFile = errorPipe.fileHandleForReading
             
@@ -506,11 +493,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return output ?? ""
     }
     
-    func timerExpired() {
-        if activeTimer != nil {
-            activeTimer!.invalidate()
-            activeTimer = nil
-        }
+    @objc func timerExpired() {
+        stopCountdownTimer()
+        activeTimer?.invalidate()
+        activeTimer = nil
 
         let taskId = activeTaskId;
 
@@ -533,41 +519,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
     
-    func setActiveTask(_ sender: AnyObject) {
+    @objc func setActiveTask(_ sender: AnyObject) {
         if activeTaskId != nil{
             stopActiveTask()
         }
         startTaskById(sender.representedObject as! String)
         
-        if let configuredPomodoroDuration = configuration!["pomodoro.durationSeconds"] {
+        if let configuredPomodoroDuration = configuration["pomodoro.durationSeconds"] {
             if let configuredPomodoroDurationAsDouble = Double(configuredPomodoroDuration) {
                 pomodoroDuration = configuredPomodoroDurationAsDouble
             }
         }
 
-        activeTimer = Timer.scheduledTimer(
-            timeInterval: pomodoroDuration,
-            target: self,
-            selector: #selector(AppDelegate.timerExpired),
-            userInfo: nil,
-            repeats: false
-        )
+        activeTimer = Timer(timeInterval: pomodoroDuration, repeats: false) { _ in self.timerExpired() }
+        RunLoop.current.add(activeTimer!, forMode: .default)
         
         let now = Date()
         activeTimerEnds = now.addingTimeInterval(pomodoroDuration);
     }
     
-    func updateTaskTimer() {
+    @objc func updateTaskTimer() {
+        guard let finish = activeTimerEnds else { return }
+        
         let date = Date()
         
-        let minutesFrom = activeTimerEnds?.minutesFrom(date) ?? 25
-        let secondsFrom = (activeTimerEnds?.secondsFrom(date) ?? 1500) - minutesFrom * 60
+        let minutesFrom = finish.minutes(from: date)
+        let secondsFrom = finish.seconds(from: date) - minutesFrom * 60
         
         getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
     }
     
-    func exitNow(_ aNotification: Notification) {
-        NSApplication.shared().terminate(self)
+    @objc func exitNow() {
+        NSApplication.shared.terminate(self)
     }
 }
 
@@ -587,20 +570,20 @@ extension Date {
     func hoursFrom(_ date:Date) -> Int{
         return (Calendar.current as NSCalendar).components(.hour, from: date, to: self, options: []).hour!
     }
-    func minutesFrom(_ date:Date) -> Int{
+    func minutes(from date:Date) -> Int{
         return (Calendar.current as NSCalendar).components(.minute, from: date, to: self, options: []).minute!
     }
-    func secondsFrom(_ date:Date) -> Int{
+    func seconds(from date:Date) -> Int{
         return (Calendar.current as NSCalendar).components(.second, from: date, to: self, options: []).second!
     }
-    func offsetFrom(_ date:Date) -> String {
+    func offset(from date:Date) -> String {
         if yearsFrom(date)   > 0 { return "\(yearsFrom(date))y"   }
         if monthsFrom(date)  > 0 { return "\(monthsFrom(date))M"  }
         if weeksFrom(date)   > 0 { return "\(weeksFrom(date))w"   }
         if daysFrom(date)    > 0 { return "\(daysFrom(date))d"    }
         if hoursFrom(date)   > 0 { return "\(hoursFrom(date))h"   }
-        if minutesFrom(date) > 0 { return "\(minutesFrom(date))m" }
-        if secondsFrom(date) > 0 { return "\(secondsFrom(date))s" }
+        if minutes(from: date) > 0 { return "\(minutes(from: date))m" }
+        if seconds(from: date) > 0 { return "\(seconds(from: date))s" }
         return ""
     }
 }
