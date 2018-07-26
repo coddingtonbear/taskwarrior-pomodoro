@@ -15,32 +15,32 @@ let NSAlternateKeyMask = 1 << 19
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotificationCenterDelegate {
     @IBOutlet weak var window: NSWindow!
-    
+
     // Leave for later detections
     var taskPath = ""
     //MARK: Attributes -
-    
-    let statusItem = NSStatusBar.systemStatusBar().statusItemWithLength(NSSquareStatusItemLength)
+
+    let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     var activeTaskId: String? = nil
-    var activeTimer: NSTimer? = nil
-    var activeTimerEnds: NSDate? = nil
+    var activeTimer: Timer? = nil
+    var activeTimerEnds: Date? = nil
     var activeMenuItem: NSMenuItem? = nil
     var pomodoroDuration: Double = 60 * 25
     var configuration: [String: String]? = nil
     let menu = NSMenu();
-    var activeCountdownTimer: NSTimer? = nil
+    var activeCountdownTimer: Timer? = nil
     var currentPomodorosLogUUID: String?
     var pomsPerLongBreak: Int = 4
     var activeTaskPomodorosLogUUID: String?
-    var pendingTasksMtime: NSDate? = nil
+    var pendingTasksMtime: Date? = nil
     var pendingTasks: [JSON] = []
-    
+
     let kPomodoroLogEntryDescription = "PomodoroLog"
     let kPomsLongBreakCharacter = "-"
     let kPomsPomDoneCharacter = "🍅"
     let kPomsActiveCharacter = "🍊"
 
-    
+
     //MARK: Menu Items Tags -
     let kTimerItemTag = 1
     let kActiveTaskSeparator1ItemTag = 2
@@ -53,117 +53,113 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     let kSyncSeparatorMenuItemTag = 7;
     let kSyncMenuItemTag = 9;
     let kPomodorosCountMenuItemTag = 10
-    
+
     //MARK: Menu Items Titles -
     let kStopTitleFormat = "Stop (%02u:%02u remaining)"
     let kActiveTitlePrefix = "Active: "
 
     //MARK: NSApplicationDelegate -
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
-        NSUserNotificationCenter.defaultUserNotificationCenter().delegate = self
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
+        NSUserNotificationCenter.default.delegate = self
 
         do {
             configuration = try getConfigurationSettings()
-        }
-        catch FileError.FileNotFound(let file_path) {
-            let alert:NSAlert = NSAlert();
+        } catch FileError.fileNotFound(let file_path) {
+            let alert: NSAlert = NSAlert();
             alert.messageText = "Configuration file not found";
             alert.informativeText = "Your taskwarrior configuration file could not be found at \(file_path).";
             alert.runModal();
             exit(1);
-        }
-        catch FileError.FileEmpty {
+        } catch FileError.fileEmpty {
             // This is probably fine
-        }
-        catch is ErrorType {
-            let alert:NSAlert = NSAlert();
+        } catch {
+            let alert: NSAlert = NSAlert();
             alert.messageText = "Unexpected error";
             alert.informativeText = "An error was encountered while loading your configuration.";
             alert.runModal();
             exit(1);
         }
-        
-        let fileManager = NSFileManager.defaultManager()
+
+        let fileManager = FileManager.default
         var pathOptions = [
             "/usr/local/bin/task",
             "/usr/bin/task",
             "/opt/local/bin/task",
-            ]
+        ]
         if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
             pathOptions = [configuredPath]
         }
 
         for pathOption in pathOptions {
-            if fileManager.fileExistsAtPath(pathOption) {
+            if fileManager.fileExists(atPath: pathOption) {
                 taskPath = pathOption
                 break
             }
         }
         if taskPath == "" {
-            let pathOptionsString = pathOptions.joinWithSeparator(", ")
+            let pathOptionsString = pathOptions.joined(separator: ", ")
             fatalError(
-                "Could not find taskwarrior in \(pathOptionsString)"
+                    "Could not find taskwarrior in \(pathOptionsString)"
             )
         }
 
         if let button = statusItem.button {
-            #if DEBUG
-                button.image = NSImage(named: "StatusBarButtonImageDevelopment")
-            #else
-                button.image = NSImage(named: "StatusBarButtonImage")
-            #endif
-            button.action = Selector("printQuote:")
+#if DEBUG
+            button.image = NSImage(named: NSImage.Name(rawValue: "StatusBarButtonImageDevelopment"))
+#else
+            button.image = NSImage(named: NSImage.Name(rawValue: "StatusBarButtonImage"))
+#endif
         }
-        
+
         menu.delegate = self
         statusItem.menu = menu
 
         refreshPendingTasks()
     }
-    
-    func userNotificationCenter(center: NSUserNotificationCenter, shouldPresentNotification notification: NSUserNotification) -> Bool {
+
+    func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
         return true
     }
-    
-    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
+
+    func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
         let taskId = notification.userInfo!["taskId"] as! String
         setActiveTask(taskId)
     }
-    
+
     //MARK: NSMenuDelegate -
-    func menuWillOpen(menu: NSMenu) {
+    func menuWillOpen(_ menu: NSMenu) {
         updateMenuItems();
         startCountdownTimer()
     }
-    
-    func menuDidClose(menu: NSMenu) {
+
+    func menuDidClose(_ menu: NSMenu) {
         stopCountdownTimer()
     }
 
-    
+
     //MARK: API -
     func startCountdownTimer() {
         if activeTimerEnds != nil {
-            activeCountdownTimer = NSTimer(
-                timeInterval: 1.0,
-                target: self,
-                selector: "updateTaskTimer",
-                userInfo: nil,
-                repeats: true
+            activeCountdownTimer = Timer(
+                    timeInterval: 1.0,
+                    target: self,
+                    selector: #selector(AppDelegate.updateTaskTimer),
+                    userInfo: nil,
+                    repeats: true
             )
-            NSRunLoop.currentRunLoop().addTimer(self.activeCountdownTimer!, forMode: NSEventTrackingRunLoopMode)
+            RunLoop.current.add(self.activeCountdownTimer!, forMode: RunLoopMode.eventTrackingRunLoopMode)
         }
     }
-    
+
     func stopCountdownTimer() {
         activeCountdownTimer?.invalidate();
         activeCountdownTimer = nil
     }
-    
-    func updateMenuItems(aNotification: NSNotification){
+
+    func updateMenuItems(_ sender: Any) {
         updateMenuItems()
     }
-    
+
     func updateMenuItems() {
         setupStatsMenuItems()
         setupActiveTaskMenuItem()
@@ -171,162 +167,153 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         setupQuitMenuItem()
         setupTaskListMenuItems()
     }
-    
+
     func setupStatsMenuItems() {
         let pomodoros = getPomodorosCountMenuItem()
-        
+
         if let title = getPomodorosCountTitle() {
-            pomodoros.hidden = false
+            pomodoros.isHidden = false
             pomodoros.title = title
         } else {
-            pomodoros.hidden = true
+            pomodoros.isHidden = true
         }
     }
-    
+
     func setupActiveTaskMenuItem() {
         let activeSeparator1MenuItem = getActiveSeparatorMenuItem(1)
         let activeTaskMenuItem = getActiveTaskMenuItem()
         let stopTaskMenuItem = getStopTaskMenuItem()
-        getActiveSeparatorMenuItem(2)
-        
-        
+        _ = getActiveSeparatorMenuItem(2)
+
+
         if activeTaskId != nil {
-            activeSeparator1MenuItem.hidden = false
-            activeTaskMenuItem.hidden = false
-            stopTaskMenuItem.hidden = false
+            activeSeparator1MenuItem.isHidden = false
+            activeTaskMenuItem.isHidden = false
+            stopTaskMenuItem.isHidden = false
             let taskDescription = getActiveTaskDescription()
             activeTaskMenuItem.title = "\(kActiveTitlePrefix) \(taskDescription)"
             updateTaskTimer()
         } else {
-            activeSeparator1MenuItem.hidden = true
-            activeTaskMenuItem.hidden = true
-            stopTaskMenuItem.hidden = true
+            activeSeparator1MenuItem.isHidden = true
+            activeTaskMenuItem.isHidden = true
+            stopTaskMenuItem.isHidden = true
         }
     }
-    
+
     func setupSyncMenuItem() {
-        guard menu.itemWithTag(kSyncMenuItemTag) == nil else {
+        guard menu.item(withTag: kSyncMenuItemTag) == nil else {
             return
         }
-        
+
         var hidden = true;
         if configuration!["taskd.server"] != nil {
             hidden = false;
         }
-        
+
         let syncSeparator = separatorWithTag(kSyncSeparatorMenuItemTag)
-        syncSeparator.hidden = hidden;
-        
-        let syncMenuItem = NSMenuItem(title: "Synchronize", action: Selector("sync:"), keyEquivalent: "s")
+        syncSeparator.isHidden = hidden;
+
+        let syncMenuItem = NSMenuItem(title: "Synchronize", action: #selector(AppDelegate.sync(_:)), keyEquivalent: "s")
         syncMenuItem.tag = kSyncMenuItemTag
-        syncMenuItem.hidden = hidden;
+        syncMenuItem.isHidden = hidden;
         menu.addItem(syncMenuItem)
     }
-    
+
     func setupQuitMenuItem() {
-        guard menu.itemWithTag(kQuitMenuItemTag) == nil else {
+        guard menu.item(withTag: kQuitMenuItemTag) == nil else {
             return
         }
-        
-        separatorWithTag(kQuitSeparatorMenuItemTag)
-        
-        let quitMenuItem = NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: Selector("terminate:"), keyEquivalent: "q")
+
+        _ = separatorWithTag(kQuitSeparatorMenuItemTag)
+
+        let quitMenuItem = NSMenuItem(title: "Quit Taskwarrior Pomodoro", action: #selector(AppDelegate.exitNow(_:)), keyEquivalent: "q")
         quitMenuItem.tag = kQuitMenuItemTag
         menu.addItem(quitMenuItem)
     }
-    
+
     func setupTaskListMenuItems() {
         clearOldTasks()
-        
+
         let tasks = getPendingTasks();
-        
+
         for task in tasks {
             if let description = task["description"].string {
                 if let uuid = task["uuid"].string {
                     let menuItem = NSMenuItem(
-                        title: description,
-                        action: Selector("setActiveTaskViaMenu:"),
-                        keyEquivalent: ""
+                            title: description,
+                            action: #selector(AppDelegate.setActiveTaskViaMenu(_:)),
+                            keyEquivalent: ""
                     )
                     menuItem.representedObject = uuid
                     menuItem.tag = kPendingTaskMenuItemTag
-                    let index = menu.indexOfItemWithTag(kSyncSeparatorMenuItemTag)
-                    menu.insertItem(menuItem, atIndex: index)
+                    let index = menu.indexOfItem(withTag: kSyncSeparatorMenuItemTag)
+                    menu.insertItem(menuItem, at: index)
                 }
             }
         }
     }
-    
-    enum FileError: ErrorType {
-        case FileNotFound(file_path: NSString)
-        case FileEmpty
-    }
-    
-    func getConfigurationSettings(path: String = "~/.taskrc") throws -> [String: String] {
-        var configurationSettings = [String: String]()
-        
-        let location = NSString(string: path).stringByExpandingTildeInPath
-        let fileManager = NSFileManager.defaultManager()
-        if !fileManager.fileExistsAtPath(location) {
-            throw FileError.FileNotFound(file_path: location)
-        }
-        let fileContent = try? NSString(contentsOfFile: location, encoding: NSUTF8StringEncoding) as String
-        let fileContentLines = fileContent?.characters.split{$0 == "\n"}.map(String.init)
-        
-        for line in fileContentLines! {
-            var equalIndex: String.CharacterView.Index? = nil;
 
-            if let idx = line.characters.indexOf("=" as Character) {
-                equalIndex = idx
-            }
-            
+    enum FileError: Error {
+        case fileNotFound(file_path: NSString)
+        case fileEmpty
+    }
+
+    func getConfigurationSettings(_ path: String = "~/.taskrc") throws -> [String: String] {
+        var configurationSettings = [String: String]()
+
+        let location = NSString(string: path).expandingTildeInPath
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: location) {
+            throw FileError.fileNotFound(file_path: location as NSString)
+        }
+        guard let fileContent = try? String(contentsOfFile: location, encoding: .utf8) else {
+            return configurationSettings
+        }
+        let fileContentLines = fileContent.split(separator: "\n").map(String.init)
+
+        for line in fileContentLines {
             if line.hasPrefix("include ") {
                 var pathLine = line;
-                let prefixRange = line.startIndex..<line.startIndex.advancedBy(8)
-                pathLine.removeRange(prefixRange)
+                let prefixRange = line.startIndex..<line.index(line.startIndex, offsetBy: 8)
+                pathLine.removeSubrange(prefixRange)
                 do {
                     for (k, v) in try getConfigurationSettings(pathLine) {
                         configurationSettings[k] = v
                     }
-                }
-                catch FileError.FileNotFound(let file_path) {
+                } catch FileError.fileNotFound(let file_path) {
                     print("File '\(file_path)' not found")
-                }
-                catch FileError.FileEmpty {
+                } catch FileError.fileEmpty {
                     //ignore
                 }
-            } else if equalIndex != nil {
-                let configurationKey = line.substringWithRange(
-                    Range(start: line.startIndex, end: equalIndex!)
-                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-                let configurationValue = line.substringFromIndex(
-                    equalIndex!.successor()
-                    ).stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+            } else if let equalIndex = line.index(of: "=" as Character) {
+                let configurationKey = line[line.startIndex..<equalIndex].trimmingCharacters(in: .whitespaces)
+                let configurationValue = line[line.index(after: equalIndex)...].trimmingCharacters(in: .whitespaces)
+
                 configurationSettings[configurationKey] = configurationValue
             }
         }
         if configurationSettings.count == 0 {
-            throw FileError.FileEmpty
+            throw FileError.fileEmpty
         }
         return configurationSettings
     }
 
     func pendingTasksAreOutOfDate() -> Bool {
-        let fileManager = NSFileManager.defaultManager()
+        let fileManager = FileManager.default
 
         if let dataLocation = configuration!["data.location"] {
-            let path = NSString(string: dataLocation + "/pending.data").stringByExpandingTildeInPath
+            let path = NSString(string: dataLocation + "/pending.data").expandingTildeInPath
             let attrs: NSDictionary
             do {
-                attrs = try fileManager.attributesOfItemAtPath(path)
+                attrs = try fileManager.attributesOfItem(atPath: path) as NSDictionary
             } catch _ {
                 print("Error encountered getting attributes of pending.data")
                 return true
             }
-            let modificationDate = attrs[NSFileModificationDate] as! NSDate
+            let modificationDate = attrs[FileAttributeKey.modificationDate] as! Date
 
 
-            if pendingTasksMtime == nil || pendingTasksMtime!.compare(modificationDate) == NSComparisonResult.OrderedAscending {
+            if pendingTasksMtime == nil || pendingTasksMtime!.compare(modificationDate) == ComparisonResult.orderedAscending {
                 pendingTasksMtime = modificationDate
                 return true
             }
@@ -335,12 +322,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
 
         return true
     }
-    
+
     func getPendingTasks() -> [JSON] {
         if pendingTasksAreOutOfDate() {
             refreshPendingTasks()
         }
-        
+
         return pendingTasks
     }
 
@@ -351,69 +338,81 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
 
         pendingTasks = tasks
     }
-    
+
     func getPendingArguments() -> [String] {
         var pendingArguments = ["status:Pending"]
-        
+
         if let definedDefaultFilter = configuration!["pomodoro.defaultFilter"] {
             pendingArguments = [definedDefaultFilter] + pendingArguments
         }
-        
+
         return pendingArguments
     }
-    
-    func getSortedTasks(tasks: [JSON]) -> [JSON] {
+
+    func getSortedTasks(_ tasks: [JSON]) -> [JSON] {
         var sortedTasks = tasks
-        
+
         if let sortList = configuration!["pomodoro.default.sort"] {
             sortedTasks = sortTasks(sortedTasks, withList: sortList)
         }
-        
+
         return sortedTasks
     }
-    
-    func sortTasks(tasks: [JSON], withList list: String) -> [JSON]{
+
+    func sortTasks(_ tasks: [JSON], withList list: String) -> [JSON] {
         let theList = processSortingList(list)
-        
-        let sortedTasks = tasks.sort {
+
+        let sortedTasks = tasks.sorted {
             var sorted: Bool = false
-            
+
             for (field, ascending) in theList {
-                if $0[field].type == .Null &&  $1[field].type == .Null {continue}
-                if $0[field] == $1[field] {continue}
-                if $1[field].type == .Null {sorted = !ascending; break}
-                if $0[field].type == .Null {sorted = ascending; break}
-                
+                if $0[field].type == .null && $1[field].type == .null {
+                    continue
+                }
+                if $0[field] == $1[field] {
+                    continue
+                }
+                if $1[field].type == .null {
+                    sorted = !ascending;
+                    break
+                }
+                if $0[field].type == .null {
+                    sorted = ascending;
+                    break
+                }
+
                 if (ascending) {
-                    sorted = $0[field] < $1[field]; break
+                    sorted = $0[field] < $1[field];
+                    break
                 } else {
-                    sorted = $0[field] > $1[field]; break
+                    sorted = $0[field] > $1[field];
+                    break
                 }
             }
-            
+
             return sorted
         }
-        
+
         return sortedTasks
     }
-    
-    func processSortingList(list: String) -> [(String, Bool)] {
+
+    func processSortingList(_ list: String) -> [(String, Bool)] {
         var processedList = [(String, Bool)]()
-        
-        let rawList = list.characters.split(",").map(String.init)
+
+        let rawList = list.split(separator: ",").map(String.init)
         for element in rawList {
             processedList.append(processSortFilter(element))
         }
-        
+
         return processedList
     }
-    
-    func processSortFilter(sort: String) -> (String, Bool) {
+
+    func processSortFilter(_ sort: String) -> (String, Bool) {
         var sortAscending = true
-        
-        let noSolidus = sort.stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: "\\/"))
-        
-        switch (noSolidus.characters.last!) {
+
+        let noSolidus = sort.trimmingCharacters(in: CharacterSet(charactersIn: "\\/"))
+
+        switch (noSolidus.last!) {
         case "+":
             sortAscending = true
         case "-":
@@ -421,77 +420,78 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         default:
             sortAscending = true
         }
-        
-        let trimmedSort = noSolidus.stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: "+-"))
-        
+
+        let trimmedSort = noSolidus.trimmingCharacters(in: CharacterSet(charactersIn: "+-"))
+
         return (trimmedSort, sortAscending)
     }
-    
+
     func getTodaysPomodorosLog() -> JSON? {
         let logFilter = ["status:Completed", kPomodoroLogEntryDescription, "entry:today", "limit:1"]
         let tasks = getTasksUsingFilter(logFilter)
-        
+
         let task = tasks[safe: 0]
         currentPomodorosLogUUID = task?["uuid"].string
         return task
     }
-    
-    func getTasksUsingFilter(filter: [String]) -> [JSON] {
+
+    func getTasksUsingFilter(_ filter: [String]) -> [JSON] {
         let arguments = ["rc.json.array=off"] + filter + ["export"]
-        
+
         let output = taskCommandWithResult(arguments)
-        
-        let taskListStrings = output.characters.split{$0 == "\n"}.map(String.init)
-        
-        var taskList = [JSON]()
-        for taskListString in taskListStrings {
-            if let dataFromString = taskListString.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: true) {
-                let taskData = JSON(data: dataFromString)
-                taskList.append(taskData)
+
+        let taskListStrings = output.split(separator: "\n").map(String.init)
+
+        let taskList = taskListStrings.map { (string) -> JSON in
+            if let dataFromString = string.data(using: .utf8, allowLossyConversion: true) {
+                return (try? JSON(data: dataFromString)) ?? JSON.null
             }
+            return JSON.null
+        }.filter {
+            $0 != JSON.null
         }
-        
+
         return taskList;
     }
-    
+
     func createTodaysPomodorosLogEntry() -> String? {
         let arguments = ["log", kPomodoroLogEntryDescription]
         taskCommand(arguments)
-        
+
         let log = getTodaysPomodorosLog()
         return log?["uuid"].string
     }
-    
-    func taskCommandWithResult(arguments: [String]) -> String {
-        let task = NSTask()
+
+    func taskCommandWithResult(_ arguments: [String]) -> String {
+        let task = Process()
         task.launchPath = taskPath
         task.arguments = arguments
-        
-        let pipe = NSPipe()
+
+        let pipe = Pipe()
         task.standardOutput = pipe
         task.launch()
         task.waitUntilExit()
-        
+
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
-        
+        let output = NSString(data: data, encoding: String.Encoding.utf8.rawValue)! as String
+
         return output
     }
-    
-    func taskCommand(arguments: [String]) {
-        let task = NSTask()
+
+    func taskCommand(_ arguments: [String]) {
+        let task = Process()
         task.launchPath = taskPath
         task.arguments = arguments
 
         task.launch()
         task.waitUntilExit()
     }
-    
+
     func getPomodorosCountTitle() -> String? {
         var title = ""
         var pomsDone = 0
         var pomsActive = isActive() ? 1 : 0
-       
+
         // Allow users to disable the pomodoro count display
         if let countDisplayString = configuration!["pomodoro.displayCount"] {
             if let countDisplay = countDisplayString.toBool() {
@@ -500,18 +500,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
                 }
             }
         }
-        
+
         if let log = getTodaysPomodorosLog() {
-             pomsDone = log["annotations"].count
+            pomsDone = log["annotations"].count
         }
-        
+
         let pomsToDraw = pomsDone + pomsActive
-        
+
         for i in 0..<pomsToDraw {
             if (i + 1) % pomsPerLongBreak == 1 && i != 0 {
                 title += kPomsLongBreakCharacter
             }
-            
+
             if pomsDone > 0 {
                 title += kPomsPomDoneCharacter
                 pomsDone -= 1
@@ -519,43 +519,43 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
                 title += kPomsActiveCharacter
                 pomsActive -= 1
             }
-            
+
         }
-        
+
         return title.isEmpty ? nil : title
     }
-    
+
     func isActive() -> Bool {
         return activeTaskId != nil
     }
-    
-    
+
+
     func clearOldTasks() {
-        while let item = menu.itemWithTag(kPendingTaskMenuItemTag) {
+        while let item = menu.item(withTag: kPendingTaskMenuItemTag) {
             menu.removeItem(item)
         }
     }
-    
+
     func getStopTaskMenuItem() -> NSMenuItem {
-        if let item = menu.itemWithTag(kStopTaskMenuItemTag) {
+        if let item = menu.item(withTag: kStopTaskMenuItemTag) {
             return item;
         }
-        
+
         let stopItem = NSMenuItem(
-            title: "Stop",
-            action: Selector("stopActiveTask:"),
-            keyEquivalent: "s"
+                title: "Stop",
+                action: #selector(AppDelegate.stopActiveTask(_:)),
+                keyEquivalent: "s"
         )
-        stopItem.keyEquivalentModifierMask = NSAlternateKeyMask
+        stopItem.keyEquivalentModifierMask = NSEvent.ModifierFlags(rawValue: UInt(NSAlternateKeyMask))
         stopItem.tag = kStopTaskMenuItemTag
         menu.addItem(stopItem)
-        
+
         return stopItem;
     }
-    
-    func getActiveSeparatorMenuItem(index: Int) -> NSMenuItem {
+
+    func getActiveSeparatorMenuItem(_ index: Int) -> NSMenuItem {
         var tag: Int = 1
-        
+
         switch (index) {
         case 1:
             tag = kActiveTaskSeparator1ItemTag
@@ -564,143 +564,143 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         default:
             tag = kActiveTaskSeparator1ItemTag;
         }
-        
-        let separator = menu.itemWithTag(tag) ?? separatorWithTag(tag);
-        
+
+        let separator = menu.item(withTag: tag) ?? separatorWithTag(tag);
+
         return separator
     }
-    
+
     func getActiveTaskMenuItem() -> NSMenuItem {
-        if let item = menu.itemWithTag(kActiveTaskMenuItemTag) {
+        if let item = menu.item(withTag: kActiveTaskMenuItemTag) {
             return item
         }
-        
+
         let taskDescription = getActiveTaskDescription()
         let activeItem = NSMenuItem(
-            title: "\(kActiveTitlePrefix) \(taskDescription)",
-            action: "",
-            keyEquivalent: ""
+                title: "\(kActiveTitlePrefix) \(taskDescription)",
+                action: nil,
+                keyEquivalent: ""
         )
-        activeItem.enabled = false
+        activeItem.isEnabled = false
         activeItem.tag = kActiveTaskMenuItemTag
         menu.addItem(activeItem)
-        
+
         return activeItem
     }
-    
+
     func getPomodorosCountMenuItem() -> NSMenuItem {
-        if let item = menu.itemWithTag(kPomodorosCountMenuItemTag) {
+        if let item = menu.item(withTag: kPomodorosCountMenuItemTag) {
             return item
         }
-        
+
         let pomsItem = NSMenuItem(
-            title: "",
-            enabled: false,
-            tag: kPomodorosCountMenuItemTag
+                title: "",
+                enabled: false,
+                tag: kPomodorosCountMenuItemTag
         )
-        
+
         menu.addItem(pomsItem)
         return pomsItem
     }
-    
-    func separatorWithTag(tag: Int) -> NSMenuItem {
-        let separator = NSMenuItem.separatorItem()
+
+    func separatorWithTag(_ tag: Int) -> NSMenuItem {
+        let separator = NSMenuItem.separator()
         separator.tag = tag
         menu.addItem(separator);
         return separator
     }
-    
+
     func getActiveTaskDescription() -> String {
         if activeTaskId == nil {
             return "N/A"
         }
-        
+
         var description: String = "N/A"
-        
+
         let filter = [activeTaskId!, "limit:1"]
         let tasks = getTasksUsingFilter(filter)
-        
+
         if !tasks.isEmpty {
             let taskData = tasks[0]
             if let thisDescription = taskData["description"].string {
                 description = thisDescription
             }
         }
-        
+
         return description
     }
-    
-    func sync(aNotification: NSNotification) {
+
+    @objc func sync(_ sender: Any) {
         sync()
     }
-    
+
     func sync() {
         taskCommand(["sync"])
     }
-    
-    func stopActiveTask(aNotification: NSNotification) {
+
+    @objc func stopActiveTask(_ sender: Any) {
         stopActiveTask()
     }
-    
+
     func stopActiveTask() {
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
         }
-        
+
         activeTimerEnds = nil;
         updateTaskTimer()
 
         taskCommand([activeTaskId!, "stop"])
-        
+
         activeTaskId = nil
         updateMenuItems()
     }
-    
-    func startTaskById(taskId: String) {
+
+    func startTaskById(_ taskId: String) {
         activeTaskId = taskId
-        
+
         taskCommand([taskId, "start"])
         activeTaskPomodorosLogUUID = currentPomodorosLogUUID
-        
+
         if activeTaskPomodorosLogUUID == nil {
             activeTaskPomodorosLogUUID = createTodaysPomodorosLogEntry()
         }
-        
+
         updateMenuItems()
     }
-    
-    func runPostCompletionHooks(taskId: String) {
+
+    func runPostCompletionHooks(_ taskId: String) {
         if let postCompletionCommand = configuration!["pomodoro.postCompletionCommand"] {
-            let errorPipe = NSPipe()
+            let errorPipe = Pipe()
             let errorFile = errorPipe.fileHandleForReading
-            
-            let task = NSTask()
+
+            let task = Process()
             task.launchPath = "/bin/sh"
             task.arguments = ["-c", "\(postCompletionCommand) \(taskId)"]
             task.standardError = errorPipe
             task.launch()
             task.waitUntilExit()
-            
+
             let stderr = stringFromFileAndClose(errorFile)
-            
+
             if task.terminationStatus != 0 {
-                let alert:NSAlert = NSAlert();
+                let alert: NSAlert = NSAlert();
                 alert.messageText = "Post-Hook Error";
                 alert.informativeText = "An error was encountered when running your post-hook command: `\(stderr)`.";
                 alert.runModal();
             }
         }
     }
-    
-    private func stringFromFileAndClose(file: NSFileHandle) -> String {
+
+    fileprivate func stringFromFileAndClose(_ file: FileHandle) -> String {
         let data = file.readDataToEndOfFile()
         file.closeFile()
-        let output = NSString(data: data, encoding: NSUTF8StringEncoding) as String?
+        let output = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as String?
         return output ?? ""
     }
-    
-    func timerExpired() {
+
+    @objc func timerExpired() {
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
@@ -710,98 +710,125 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
 
         stopActiveTask()
         logPomodoroForTaskDone(taskId)
-        
+
         // create a User Notification
         let notification = NSUserNotification.init()
         notification.title = "Break time!"
         notification.informativeText = "You've completed your pomodoro."
-        notification.userInfo = ["taskId" : taskId!]
+        notification.userInfo = ["taskId": taskId!]
         notification.soundName = NSUserNotificationDefaultSoundName
         notification.hasActionButton = true
         notification.actionButtonTitle = "Start Another"
-        
+
         // Deliver the notification through the User Notification Center
-        NSUserNotificationCenter.defaultUserNotificationCenter().deliverNotification(notification)
+        NSUserNotificationCenter.default.deliver(notification)
 
         runPostCompletionHooks(taskId!)
     }
-    
-    func logPomodoroForTaskDone(taskId: String?) {
+
+    func logPomodoroForTaskDone(_ taskId: String?) {
         let uuid = taskId ?? ""
-        
+
         if let logId = activeTaskPomodorosLogUUID {
             taskCommand([logId, "annotate", "\"Pomodoro uuid:\(uuid)\""])
         }
     }
-    
-    func setActiveTask(taskId: String) {
-        if activeTaskId != nil{
+
+    func setActiveTask(_ taskId: String) {
+        if activeTaskId != nil {
             stopActiveTask()
         }
         startTaskById(taskId)
-        
+
         if let configuredPomodoroDuration = configuration!["pomodoro.durationSeconds"] {
             if let configuredPomodoroDurationAsDouble = Double(configuredPomodoroDuration) {
                 pomodoroDuration = configuredPomodoroDurationAsDouble
             }
         }
 
-        activeTimer = NSTimer.scheduledTimerWithTimeInterval(
-            pomodoroDuration,
-            target: self,
-            selector: "timerExpired",
-            userInfo: nil,
-            repeats: false
-        )
-        
-        let now = NSDate()
-        activeTimerEnds = now.dateByAddingTimeInterval(pomodoroDuration);
+//        activeTimer = Timer.scheduledTimer(
+//            timeInterval: pomodoroDuration,
+//            target: self,
+//            selector: #selector(AppDelegate.timerExpired),
+//            userInfo: nil,
+//            repeats: false
+//        )
+        activeTimer = Timer(timeInterval: pomodoroDuration, target: self, selector: #selector(AppDelegate.timerExpired), userInfo: nil, repeats: false)
+        RunLoop.current.add(activeTimer!, forMode: .commonModes)
+
+        let now = Date()
+        activeTimerEnds = now.addingTimeInterval(pomodoroDuration);
     }
-    
-    func setActiveTaskViaMenu(sender: AnyObject) {
+
+    @objc func setActiveTaskViaMenu(_ sender: AnyObject) {
         setActiveTask(sender.representedObject as! String)
     }
-    
-    func updateTaskTimer() {
-        let date = NSDate()
-        
+
+    @objc func updateTaskTimer() {
+        let date = Date()
+
         let minutesFrom = activeTimerEnds?.minutesFrom(date) ?? 25
         let secondsFrom = (activeTimerEnds?.secondsFrom(date) ?? 1500) - minutesFrom * 60
-        
+
         getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
+    }
+
+    @objc func exitNow(_ sender: Any) {
+        NSApplication.shared.terminate(self)
     }
 }
 
-extension NSDate {
-    func yearsFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Year, fromDate: date, toDate: self, options: []).year
+extension Date {
+    func yearsFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.year, from: date, to: self, options: []).year!
     }
-    func monthsFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Month, fromDate: date, toDate: self, options: []).month
+
+    func monthsFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.month, from: date, to: self, options: []).month!
     }
-    func weeksFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.WeekOfYear, fromDate: date, toDate: self, options: []).weekOfYear
+
+    func weeksFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.weekOfYear, from: date, to: self, options: []).weekOfYear!
     }
-    func daysFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Day, fromDate: date, toDate: self, options: []).day
+
+    func daysFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.day, from: date, to: self, options: []).day!
     }
-    func hoursFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Hour, fromDate: date, toDate: self, options: []).hour
+
+    func hoursFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.hour, from: date, to: self, options: []).hour!
     }
-    func minutesFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Minute, fromDate: date, toDate: self, options: []).minute
+
+    func minutesFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.minute, from: date, to: self, options: []).minute!
     }
-    func secondsFrom(date:NSDate) -> Int{
-        return NSCalendar.currentCalendar().components(.Second, fromDate: date, toDate: self, options: []).second
+
+    func secondsFrom(_ date: Date) -> Int {
+        return (Calendar.current as NSCalendar).components(.second, from: date, to: self, options: []).second!
     }
-    func offsetFrom(date:NSDate) -> String {
-        if yearsFrom(date)   > 0 { return "\(yearsFrom(date))y"   }
-        if monthsFrom(date)  > 0 { return "\(monthsFrom(date))M"  }
-        if weeksFrom(date)   > 0 { return "\(weeksFrom(date))w"   }
-        if daysFrom(date)    > 0 { return "\(daysFrom(date))d"    }
-        if hoursFrom(date)   > 0 { return "\(hoursFrom(date))h"   }
-        if minutesFrom(date) > 0 { return "\(minutesFrom(date))m" }
-        if secondsFrom(date) > 0 { return "\(secondsFrom(date))s" }
+
+    func offsetFrom(_ date: Date) -> String {
+        if yearsFrom(date) > 0 {
+            return "\(yearsFrom(date))y"
+        }
+        if monthsFrom(date) > 0 {
+            return "\(monthsFrom(date))M"
+        }
+        if weeksFrom(date) > 0 {
+            return "\(weeksFrom(date))w"
+        }
+        if daysFrom(date) > 0 {
+            return "\(daysFrom(date))d"
+        }
+        if hoursFrom(date) > 0 {
+            return "\(hoursFrom(date))h"
+        }
+        if minutesFrom(date) > 0 {
+            return "\(minutesFrom(date))m"
+        }
+        if secondsFrom(date) > 0 {
+            return "\(secondsFrom(date))s"
+        }
         return ""
     }
 }
@@ -809,18 +836,18 @@ extension NSDate {
 extension NSMenuItem {
     convenience init(title: String, enabled: Bool, tag: NSInteger) {
         self.init(
-            title: title,
-            action: "",
-            keyEquivalent: ""
+                title: title,
+                action: nil,
+                keyEquivalent: ""
         )
-        
-        self.enabled = enabled
+
+        self.isEnabled = enabled
         self.tag = tag
     }
 }
 
 extension Array {
-    subscript (safe index: Int) -> Element? {
+    subscript(safe index: Int) -> Element? {
         return (0..<count).contains(index) ? self[index] : nil
     }
 }
