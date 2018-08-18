@@ -5,6 +5,6 @@
 	<key>teamId</key>
 	<string></string>
 	<key>method</key>
-	<string>developer-id</string>
+	<string>mac-application</string>
 </dict>
 </plist>
