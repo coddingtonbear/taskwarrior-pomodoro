@@ -1,13 +1,22 @@
+appName='Taskwarrior Pomodoro'
+archivesFolder='~/Library/Developer/Xcode/Archives'
+todayArchives="$archivesFolder/$(date +%Y-%m-%d)"
+appArchivePath="$todayArchives/$appName $(date +%Y-%m-%d,\ %H.%M).xcarchive"
+packageName="taskwarrior-pomodoro"
+tempPackagePath="builds/distribute/$packageName.dmg"
 version=$(defaults read "$PWD/Taskwarrior Pomodoro/Info.plist" CFBundleShortVersionString)
-xcodebuild -scheme "Taskwarrior Pomodoro" -archivePath "builds/Taskwarrior Pomodoro.xcarchive" archive
-xcrun xcodebuild -exportArchive -exportOptionsPlist exportOptions.plist -archivePath "builds/Taskwarrior Pomodoro.xcarchive" -exportPath "builds/"
 
-hdiutil create -size 8m -fs HFS+ -volname "Taskwarrior Pomodoro" taskwarrior-pomodoro.dmg
-hdiutil attach taskwarrior-pomodoro.dmg
+xcodebuild -scheme "$appName" -archivePath "$appArchivePath" archive
+xcrun xcodebuild -exportArchive -exportOptionsPlist exportOptions.plist -archivePath "$appArchivePath" -exportPath "builds/distribute"
 
-ln -s /Applications /Volumes/Taskwarrior\ Pomodoro/
-cp -rf builds/Taskwarrior\ Pomodoro.app /Volumes/Taskwarrior\ Pomodoro/
+hdiutil create -size 12m -fs HFS+ -volname "$appName" $tempPackagePath
+hdiutil attach $tempPackagePath
 
-hdiutil detach /Volumes/Taskwarrior\ Pomodoro
-hdiutil convert taskwarrior-pomodoro.dmg -format UDZO -o taskwarrior-pomodoro-$version.dmg
-rm taskwarrior-pomodoro.dmg
+ln -s /Applications "/Volumes/$appName/"
+cp -rf "builds/distribute/$appName.app" "/Volumes/$appName/"
+
+hdiutil detach "/Volumes/$appName"
+hdiutil convert $tempPackagePath -format UDZO -o "builds/distribute/$packageName-$version.dmg"
+codesign -s "Mac Developer: yoi-nami-ra" "builds/distribute/$packageName-$version.dmg"
+
+rm $tempPackagePath
