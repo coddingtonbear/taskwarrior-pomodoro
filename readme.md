@@ -6,7 +6,7 @@ A simple application allowing you to use Pomodoro techniques with Taskwarrior on
 
 ## Installation
 
-You can [download the latest release (1.7.0) here](http://coddingtonbear-public.s3.amazonaws.com/github/taskwarrior-pomodoro/releases/taskwarrior-pomodoro-1.7.0.dmg), and install it by dragging the application into your Applications directory.
+You can download the latest version [from the release page here](https://github.com/coddingtonbear/taskwarrior-pomodoro/releases), and install it by dragging the application into your Applications directory.
 
 ## Configuration 
 
