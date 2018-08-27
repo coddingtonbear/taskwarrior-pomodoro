@@ -11,6 +11,7 @@
 		4C879AE71C13BDF8000C3F84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE61C13BDF8000C3F84 /* Assets.xcassets */; };
 		4C879AEA1C13BDF8000C3F84 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE81C13BDF8000C3F84 /* MainMenu.xib */; };
 		4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */; };
+		F3147888212E2076007746EB /* TWMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3147887212E2076007746EB /* TWMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		4C879AE91C13BDF8000C3F84 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		4C879AEB1C13BDF8000C3F84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
+		F3147887212E2076007746EB /* TWMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TWMenu.swift; sourceTree = "<group>"; };
 		F3E3A6D021286EE300E7A428 /* changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = changelog.md; sourceTree = "<group>"; };
 		F3E3A6D121286EE300E7A428 /* readme.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -57,6 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				4C879AE41C13BDF8000C3F84 /* AppDelegate.swift */,
+				F3147887212E2076007746EB /* TWMenu.swift */,
 				4C879AE61C13BDF8000C3F84 /* Assets.xcassets */,
 				4C879AE81C13BDF8000C3F84 /* MainMenu.xib */,
 				4C879AEB1C13BDF8000C3F84 /* Info.plist */,
@@ -106,7 +109,6 @@
 					4C879AE01C13BDF8000C3F84 = {
 						CreatedOnToolsVersion = 7.1.1;
 						LastSwiftMigration = 0830;
-						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -147,6 +149,7 @@
 			files = (
 				4C879AE51C13BDF8000C3F84 /* AppDelegate.swift in Sources */,
 				4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */,
+				F3147888212E2076007746EB /* TWMenu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,8 +273,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Taskwarrior Pomodoro/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -280,7 +282,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "am.inthe.Taskwarrior-Pomodoro";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
@@ -288,9 +289,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = CA58XBENDT;
 				INFOPLIST_FILE = "Taskwarrior Pomodoro/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -299,7 +301,6 @@
 				OTHER_SWIFT_FLAGS = "-DRELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "am.inthe.Taskwarrior-Pomodoro";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};

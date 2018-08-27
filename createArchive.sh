@@ -9,6 +9,8 @@ version=$(defaults read "$PWD/Taskwarrior Pomodoro/Info.plist" CFBundleShortVers
 xcodebuild -scheme "$appName" -archivePath "$appArchivePath" archive
 xcrun xcodebuild -exportArchive -exportOptionsPlist exportOptions.plist -archivePath "$appArchivePath" -exportPath "builds/distribute"
 
+spctl -a -v "builds/distribute/$appName.app"
+
 hdiutil create -size 12m -fs HFS+ -volname "$appName" $tempPackagePath
 hdiutil attach $tempPackagePath
 
@@ -17,6 +19,5 @@ cp -rf "builds/distribute/$appName.app" "/Volumes/$appName/"
 
 hdiutil detach "/Volumes/$appName"
 hdiutil convert $tempPackagePath -format UDZO -o "builds/distribute/$packageName-$version.dmg"
-codesign -s "Mac Developer: yoi-nami-ra" "builds/distribute/$packageName-$version.dmg"
 
 rm $tempPackagePath
