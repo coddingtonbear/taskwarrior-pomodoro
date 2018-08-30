@@ -10,9 +10,36 @@
 		4C879AE51C13BDF8000C3F84 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AE41C13BDF8000C3F84 /* AppDelegate.swift */; };
 		4C879AE71C13BDF8000C3F84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE61C13BDF8000C3F84 /* Assets.xcassets */; };
 		4C879AEA1C13BDF8000C3F84 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C879AE81C13BDF8000C3F84 /* MainMenu.xib */; };
-		4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */; };
-		F3147888212E2076007746EB /* TWMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3147887212E2076007746EB /* TWMenu.swift */; };
+		F35F2EA321340626005C7469 /* TWMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = F35F2E9321340626005C7469 /* TWMenu.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		F35F2EA621340626005C7469 /* TWMenu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F35F2E9121340625005C7469 /* TWMenu.framework */; };
+		F35F2EA721340626005C7469 /* TWMenu.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F35F2E9121340625005C7469 /* TWMenu.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F35F2EAF21340630005C7469 /* TWMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3147887212E2076007746EB /* TWMenu.swift */; };
+		F35F2EB021340682005C7469 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F35F2EA421340626005C7469 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C879AD91C13BDF8000C3F84 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F35F2E9021340625005C7469;
+			remoteInfo = TWMenu;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F35F2EAD21340626005C7469 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F35F2EA721340626005C7469 /* TWMenu.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		4C879AE11C13BDF8000C3F84 /* Taskwarrior Pomodoro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Taskwarrior Pomodoro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -22,12 +49,23 @@
 		4C879AEB1C13BDF8000C3F84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
 		F3147887212E2076007746EB /* TWMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TWMenu.swift; sourceTree = "<group>"; };
+		F35F2E9121340625005C7469 /* TWMenu.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TWMenu.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F35F2E9321340626005C7469 /* TWMenu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TWMenu.h; sourceTree = "<group>"; };
+		F35F2E9421340626005C7469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F3E3A6D021286EE300E7A428 /* changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = changelog.md; sourceTree = "<group>"; };
 		F3E3A6D121286EE300E7A428 /* readme.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4C879ADE1C13BDF8000C3F84 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F35F2EA621340626005C7469 /* TWMenu.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F35F2E8D21340625005C7469 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,8 +80,8 @@
 			children = (
 				F3E3A6D321286F2600E7A428 /* docs */,
 				4C879AE31C13BDF8000C3F84 /* Taskwarrior Pomodoro */,
+				F35F2E9221340626005C7469 /* TWMenu */,
 				4C879AE21C13BDF8000C3F84 /* Products */,
-				4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -51,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				4C879AE11C13BDF8000C3F84 /* Taskwarrior Pomodoro.app */,
+				F35F2E9121340625005C7469 /* TWMenu.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -59,12 +98,22 @@
 			isa = PBXGroup;
 			children = (
 				4C879AE41C13BDF8000C3F84 /* AppDelegate.swift */,
-				F3147887212E2076007746EB /* TWMenu.swift */,
 				4C879AE61C13BDF8000C3F84 /* Assets.xcassets */,
 				4C879AE81C13BDF8000C3F84 /* MainMenu.xib */,
 				4C879AEB1C13BDF8000C3F84 /* Info.plist */,
 			);
 			path = "Taskwarrior Pomodoro";
+			sourceTree = "<group>";
+		};
+		F35F2E9221340626005C7469 /* TWMenu */ = {
+			isa = PBXGroup;
+			children = (
+				F3147887212E2076007746EB /* TWMenu.swift */,
+				4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */,
+				F35F2E9321340626005C7469 /* TWMenu.h */,
+				F35F2E9421340626005C7469 /* Info.plist */,
+			);
+			path = TWMenu;
 			sourceTree = "<group>";
 		};
 		F3E3A6D321286F2600E7A428 /* docs */ = {
@@ -78,6 +127,17 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		F35F2E8E21340625005C7469 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F35F2EA321340626005C7469 /* TWMenu.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		4C879AE01C13BDF8000C3F84 /* Taskwarrior Pomodoro */ = {
 			isa = PBXNativeTarget;
@@ -86,15 +146,35 @@
 				4C879ADD1C13BDF8000C3F84 /* Sources */,
 				4C879ADE1C13BDF8000C3F84 /* Frameworks */,
 				4C879ADF1C13BDF8000C3F84 /* Resources */,
+				F35F2EAD21340626005C7469 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F35F2EA521340626005C7469 /* PBXTargetDependency */,
 			);
 			name = "Taskwarrior Pomodoro";
 			productName = "Taskwarrior Pomodoro";
 			productReference = 4C879AE11C13BDF8000C3F84 /* Taskwarrior Pomodoro.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F35F2E9021340625005C7469 /* TWMenu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F35F2EAC21340626005C7469 /* Build configuration list for PBXNativeTarget "TWMenu" */;
+			buildPhases = (
+				F35F2E8C21340625005C7469 /* Sources */,
+				F35F2E8D21340625005C7469 /* Frameworks */,
+				F35F2E8E21340625005C7469 /* Headers */,
+				F35F2E8F21340625005C7469 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TWMenu;
+			productName = TWMenu;
+			productReference = F35F2E9121340625005C7469 /* TWMenu.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -102,13 +182,16 @@
 		4C879AD91C13BDF8000C3F84 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0710;
+				LastSwiftUpdateCheck = 0940;
 				LastUpgradeCheck = 0940;
 				ORGANIZATIONNAME = "Adam Coddington";
 				TargetAttributes = {
 					4C879AE01C13BDF8000C3F84 = {
 						CreatedOnToolsVersion = 7.1.1;
 						LastSwiftMigration = 0830;
+					};
+					F35F2E9021340625005C7469 = {
+						CreatedOnToolsVersion = 9.4;
 					};
 				};
 			};
@@ -126,6 +209,7 @@
 			projectRoot = "";
 			targets = (
 				4C879AE01C13BDF8000C3F84 /* Taskwarrior Pomodoro */,
+				F35F2E9021340625005C7469 /* TWMenu */,
 			);
 		};
 /* End PBXProject section */
@@ -140,6 +224,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F35F2E8F21340625005C7469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -148,12 +239,27 @@
 			buildActionMask = 2147483647;
 			files = (
 				4C879AE51C13BDF8000C3F84 /* AppDelegate.swift in Sources */,
-				4C879AF41C13CD00000C3F84 /* SwiftyJSON.swift in Sources */,
-				F3147888212E2076007746EB /* TWMenu.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F35F2E8C21340625005C7469 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F35F2EAF21340630005C7469 /* TWMenu.swift in Sources */,
+				F35F2EB021340682005C7469 /* SwiftyJSON.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F35F2EA521340626005C7469 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F35F2E9021340625005C7469 /* TWMenu */;
+			targetProxy = F35F2EA421340626005C7469 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		4C879AE81C13BDF8000C3F84 /* MainMenu.xib */ = {
@@ -194,6 +300,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -249,6 +356,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -272,7 +380,9 @@
 		4C879AEF1C13BDF8000C3F84 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Taskwarrior Pomodoro/Info.plist";
@@ -288,6 +398,7 @@
 		4C879AF01C13BDF8000C3F84 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
@@ -301,6 +412,74 @@
 				OTHER_SWIFT_FLAGS = "-DRELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "am.inthe.Taskwarrior-Pomodoro";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		F35F2EA821340626005C7469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = TWMenu/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = yois.test.TWMenu;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		F35F2EA921340626005C7469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = TWMenu/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = yois.test.TWMenu;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
 			};
 			name = Release;
 		};
@@ -321,6 +500,15 @@
 			buildConfigurations = (
 				4C879AEF1C13BDF8000C3F84 /* Debug */,
 				4C879AF01C13BDF8000C3F84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F35F2EAC21340626005C7469 /* Build configuration list for PBXNativeTarget "TWMenu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F35F2EA821340626005C7469 /* Debug */,
+				F35F2EA921340626005C7469 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
