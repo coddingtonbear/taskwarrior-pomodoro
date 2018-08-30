@@ -89,7 +89,7 @@ class TWMenuTests: XCTestCase {
         checkMenu(menu, properResults)
     }
     
-    func testPomsStopped() {
+    func testPomsLoggedAndStopped() {
         // Having
         guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
         guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
@@ -115,6 +115,39 @@ class TWMenuTests: XCTestCase {
             (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
         ]
 
+        checkMenu(menu, properResults)
+    }
+    
+    func testPomsLoggedWithLongBreakAndStopped() {
+        // Having
+        guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
+        guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
+        task.log(["PomodoroLog"])
+        let uuid = task.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+        let uuid1 = task.uuids(filter: ["\(id1)"]).first!
+        let uuid2 = task.uuids(filter: ["\(id2)"]).first!
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        
+        // When
+        tw.menuWillOpen(menu)
+        
+        // Then
+        present(items: menu.items)
+        
+        let properResults = [
+            (enabled: false, separator: false, "🍅🍅🍅🍅-🍅🍅"),
+            (enabled: false, separator: true, ""),
+            (enabled: true,  separator: false, "simple task no 1"),
+            (enabled: true,  separator: false, "simple task no 2"),
+            (enabled: false, separator: true, ""),
+            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        ]
+        
         checkMenu(menu, properResults)
     }
     
