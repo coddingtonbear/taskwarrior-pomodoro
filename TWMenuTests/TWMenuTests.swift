@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import TWMenu
+@testable import TWMenu
 
 class TWMenuTests: XCTestCase {
     lazy var tw = TWMenu(arguments: ["rc.data.location=task"])
@@ -141,6 +141,42 @@ class TWMenuTests: XCTestCase {
         
         let properResults = [
             (enabled: false, separator: false, "🍅🍅🍅🍅-🍅🍅"),
+            (enabled: false, separator: true, ""),
+            (enabled: true,  separator: false, "simple task no 1"),
+            (enabled: true,  separator: false, "simple task no 2"),
+            (enabled: false, separator: true, ""),
+            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testPomsLoggedAndActive() {
+        // Having
+        guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
+        guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
+        task.log(["PomodoroLog"])
+        let uuid = task.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+        let uuid1 = task.uuids(filter: ["\(id1)"]).first!
+        let uuid2 = task.uuids(filter: ["\(id2)"]).first!
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        
+        // When
+        tw.menuWillOpen(menu)
+        let items: [NSMenuItem] = menu.items
+        let filtered: [NSMenuItem] = items.filter { !$0.isHidden }.map { $0 as NSMenuItem }
+        let item = filtered[3]
+        tw.setActiveTaskViaMenu( item )
+        
+        // Then
+        present(items: menu.items)
+        
+        let properResults = [
+            (enabled: false, separator: false, "🍅🍅🍊"),
+            (enabled: false, separator: true, ""),
+            (enabled: false, separator: false, "Active:  simple task no 2"),
+            (enabled: true,  separator: false, "Stop (25:00 remaining)"),
             (enabled: false, separator: true, ""),
             (enabled: true,  separator: false, "simple task no 1"),
             (enabled: true,  separator: false, "simple task no 2"),
