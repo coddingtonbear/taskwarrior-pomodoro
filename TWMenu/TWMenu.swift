@@ -597,7 +597,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
             action: nil,
             keyEquivalent: ""
         )
-        activeItem.isEnabled = true//false
+        activeItem.isEnabled = false
         activeItem.tag = kActiveTaskMenuItemTag
         menu.addItem(activeItem)
         
@@ -611,7 +611,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         
         let pomsItem = NSMenuItem(
             title: "",
-            enabled: true,//false,
+            enabled: false,
             tag: kPomodorosCountMenuItemTag
         )
         
