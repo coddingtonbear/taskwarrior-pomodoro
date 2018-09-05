@@ -17,7 +17,7 @@ class TWMenuTests: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        war.show()
+        war.show("nag")
     }
     
     override func tearDown() {

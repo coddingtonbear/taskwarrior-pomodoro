@@ -38,8 +38,8 @@ public class SwiftTaskWarrior {
         _ = run(cmd: "config", params: ["rc.confirmation=off", "\(key)", "\(val)"])
     }
     
-    public func show() {
-        _ = run(cmd: "show", params: ["rc.confirmation=off"])
+    public func show(_ name: String?) {
+        _ = run(cmd: "show", params: [name ?? ""] + ["rc.confirmation=off"])
     }
     
     public func log(_ raw: [String]) {
@@ -58,11 +58,11 @@ public class SwiftTaskWarrior {
     
     
     // MARK: - ### Private API ###
-    func run(cmd: String, params: [String] = [], _ input: String = "") -> String {
+    func run(cmd: String, params: [String] = [], _ input: String? = nil) -> String {
         return run(filter: [], cmd: cmd, params: params, input)
     }
     
-    func run(filter: [String], cmd: String, params: [String] = [], _ input: String = "") -> String {
+    func run(filter: [String], cmd: String, params: [String] = [], _ input: String? = nil) -> String {
         let arguments: [String] = filter + [cmd] + self.overrides + params
         var output: String = ""
         let queueStart = Date()
@@ -74,11 +74,9 @@ public class SwiftTaskWarrior {
             print("----------------")
             
             let oPipe = Pipe()
-            let iPipe = Pipe()
-            iPipe.fileHandleForWriting.write(input.data(using: .utf8) ?? Data())
             
             task.standardOutput = oPipe
-            task.standardInput = iPipe
+            if let a = input { task.standardInput = Pipe(withInput: a) }
             task.environment = self.environment
             task.launch()
             
@@ -95,5 +93,12 @@ public class SwiftTaskWarrior {
         }
         print(": \(-queueStart.timeIntervalSinceNow * 1000) ms")
         return output
+    }
+}
+
+extension Pipe {
+    public convenience init(withInput input: String) {
+        self.init()
+        self.fileHandleForWriting.write(input.data(using: .utf8) ?? Data())
     }
 }
