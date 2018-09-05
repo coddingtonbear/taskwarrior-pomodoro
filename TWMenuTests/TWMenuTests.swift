@@ -34,10 +34,10 @@ class TWMenuTests: XCTestCase {
         tw.menuWillOpen(menu)
         
         // Then
-        let properResults = [
-            (enabled: false, separator: true, ""),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
         
         checkMenu(menu, properResults)
@@ -55,12 +55,12 @@ class TWMenuTests: XCTestCase {
         // Then
         present(items: menu.items)
         
-        let properResults = [
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "simple task no 1"),
-            (enabled: true,  separator: false, "simple task no 2"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
         
         checkMenu(menu, properResults)
@@ -79,11 +79,11 @@ class TWMenuTests: XCTestCase {
         
         // Then
         present(items: menu.items)
-        let properResults = [
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "blocker taks 01"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("blocker taks 01"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
         
         checkMenu(menu, properResults)
@@ -106,13 +106,13 @@ class TWMenuTests: XCTestCase {
         // Then
         present(items: menu.items)
 
-        let properResults = [
-            (enabled: false, separator: false, "🍅🍅"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "simple task no 1"),
-            (enabled: true,  separator: false, "simple task no 2"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
 
         checkMenu(menu, properResults)
@@ -139,13 +139,13 @@ class TWMenuTests: XCTestCase {
         // Then
         present(items: menu.items)
         
-        let properResults = [
-            (enabled: false, separator: false, "🍅🍅🍅🍅-🍅🍅"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "simple task no 1"),
-            (enabled: true,  separator: false, "simple task no 2"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅🍅🍅-🍅🍅"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
         
         checkMenu(menu, properResults)
@@ -172,16 +172,16 @@ class TWMenuTests: XCTestCase {
         // Then
         present(items: menu.items)
         
-        let properResults = [
-            (enabled: false, separator: false, "🍅🍅🍊"),
-            (enabled: false, separator: true, ""),
-            (enabled: false, separator: false, "Active:  simple task no 2"),
-            (enabled: true,  separator: false, "Stop (25:00 remaining)"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "simple task no 1"),
-            (enabled: true,  separator: false, "simple task no 2"),
-            (enabled: false, separator: true, ""),
-            (enabled: true,  separator: false, "Quit Taskwarrior Pomodoro")
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅🍊"),
+            .separator,
+            .disabled("Active:  simple task no 2"),
+            .enabled("Stop (25:00 remaining)"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
         ]
         
         checkMenu(menu, properResults)
@@ -197,15 +197,48 @@ class TWMenuTests: XCTestCase {
         print("")
     }
     
-    func checkMenu(_ menu: NSMenu, _ properResults: [(enabled: Bool, separator: Bool, title: String)]) {
+    func checkMenu(_ menu: NSMenu, _ properResults: [MenuIemTypes]) {
         let visible = menu.items.filter { !$0.isHidden }
         guard visible.count == properResults.count else { XCTFail(); return }
         
         for entry in zip(visible, properResults) {
-            XCTAssertEqual(entry.1.enabled, entry.0.isEnabled, "is enabled")
-            XCTAssertEqual(entry.1.separator, entry.0.isSeparatorItem, "is separator")
+            XCTAssertEqual(entry.1.isEnabled, entry.0.isEnabled, "is enabled")
+            XCTAssertEqual(entry.1.isSeparatorItem, entry.0.isSeparatorItem, "is separator")
             if (!entry.0.isSeparatorItem) {
                 XCTAssertEqual(entry.1.title, entry.0.title)
+            }
+        }
+    }
+    
+    enum MenuIemTypes {
+        case enabled(String)
+        case disabled(String)
+        case separator
+        
+        var isEnabled: Bool {
+            switch self {
+            case .enabled(_):
+                return true
+            case .disabled(_), .separator:
+                return false
+            }
+        }
+        
+        var isSeparatorItem: Bool {
+            switch self {
+            case .separator:
+                return true
+            case .disabled(_), .enabled(_):
+                return false
+            }
+        }
+        
+        var title: String {
+            switch self {
+            case .separator:
+                return ""
+            case .disabled(let text), .enabled(let text):
+                return text
             }
         }
     }
