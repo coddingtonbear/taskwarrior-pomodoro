@@ -157,6 +157,35 @@ class TWMenuTests: XCTestCase {
         checkMenu(menu, properResults)
     }
     
+    func testStoppingTaskEarly() {
+        // Having
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids, count: 1)
+        
+        // When
+        tw.menuWillOpen(menu)
+        // - Activate
+        let taskItem = menu.items.filter { $0.title == "simple task no 2" }.first!
+        tw.setActiveTaskViaMenu( taskItem )
+        
+        // - Stop
+        menu.print()
+        let stopItem = menu.items.filter { $0.title.starts(with: "Stop") }.first!
+        tw.stopActiveTask( stopItem )
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
     // MARK: - workers
     func addTwoSimpleTasks() -> [String] {
         let ids = add(tasks: ["simple task no 1", "simple task no 2"])
