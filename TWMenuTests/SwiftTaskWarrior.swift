@@ -35,11 +35,11 @@ public class SwiftTaskWarrior {
     }
     
     public func config(key: String, val: String) {
-        _ = run(filter: [], cmd: "config", params: ["\(key)", "\(val)"], "yes\n")
+        _ = run(filter: [], cmd: "config", params: ["rc.confirmation=off", "\(key)", "\(val)"], "")
     }
     
     public func show() {
-        _ = run(filter: [], cmd: "show", params: [], "yes\n")
+        _ = run(filter: [], cmd: "show", params: ["rc.confirmation=off"], "")
     }
     
     public func log(_ raw: [String]) {
@@ -91,39 +91,4 @@ public class SwiftTaskWarrior {
         print(": \(-queueStart.timeIntervalSinceNow * 1000) ms")
         return output
     }
-    
-//    func run(cmd: String, params: [String], _ block: @escaping (String)->()) {
-//        run(cmd: cmd, params: params, input: "", block)
-//    }
-    
-//    func run(cmd: String, params: [String], input: String, _ block: @escaping (String)->()) {
-//        myCustomQueue.async {
-//            let task = Process()
-//            task.launchPath = "/usr/local/bin/task"
-//            task.arguments = [cmd] + self.overrides + params
-//            print("-> task \(task.arguments?.joined(separator: " ") ?? "")")
-//            print("----------------")
-//
-//            let oPipe = Pipe()
-//            let iPipe = Pipe()
-//            iPipe.fileHandleForWriting.write(input.data(using: .utf8) ?? Data())
-//
-//            task.standardOutput = oPipe
-//            task.standardInput = iPipe
-//            task.environment = self.environment
-//            task.launch()
-//
-//            let before = Date()
-//            task.waitUntilExit()
-//            let took = before.timeIntervalSinceNow
-//            print("----------------")
-//            print(": \(-took * 1000) ms")
-//            let data = oPipe.fileHandleForReading.readDataToEndOfFile()
-//            let output = NSString(data: data, encoding: String.Encoding.utf8.rawValue)! as String
-//            print("^^^^^^^^^^^^")
-//            print(output)
-//            print("______")
-//            block(output)
-//        }
-//    }
 }
