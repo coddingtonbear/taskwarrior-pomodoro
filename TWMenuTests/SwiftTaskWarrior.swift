@@ -25,39 +25,44 @@ public class SwiftTaskWarrior {
     }
     
     public func add(_ raw: [String]) -> Int? {
-        let out = run(filter: [], cmd: "add", params: raw, "")
+        let out = run(cmd: "add", params: raw)
         let id = out.components(separatedBy: .whitespaces).last?.trimmingCharacters(in: CharacterSet(charactersIn: ".\n"))
         return Int(id ?? "")
     }
     
     public func next() {
-        _ = run(filter: [], cmd: "next", params: [], "")
+        _ = run(cmd: "next")
     }
     
     public func config(key: String, val: String) {
-        _ = run(filter: [], cmd: "config", params: ["rc.confirmation=off", "\(key)", "\(val)"], "")
+        _ = run(cmd: "config", params: ["rc.confirmation=off", "\(key)", "\(val)"])
     }
     
     public func show() {
-        _ = run(filter: [], cmd: "show", params: ["rc.confirmation=off"], "")
+        _ = run(cmd: "show", params: ["rc.confirmation=off"])
     }
     
     public func log(_ raw: [String]) {
-        _ = run(filter: [], cmd: "log", params: raw, "")
+        _ = run(cmd: "log", params: raw)
     }
     
     public func annotate(filter: [String], text: String) {
-        _ = run(filter: filter, cmd: "annotate", params: [text], "")
+        _ = run(filter: filter, cmd: "annotate", params: [text])
     }
     
     public func uuids(filter: [String]) -> [String] {
-        let uuids = run(filter: filter, cmd: "uuids", params: [], "")
+        let uuids = run(filter: filter, cmd: "uuids")
         let list = uuids.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ").map { String($0) }
         return list
     }
     
+    
     // MARK: - ### Private API ###
-    func run(filter: [String], cmd: String, params: [String], _ input: String) -> String {
+    func run(cmd: String, params: [String] = [], _ input: String = "") -> String {
+        return run(filter: [], cmd: cmd, params: params, input)
+    }
+    
+    func run(filter: [String], cmd: String, params: [String] = [], _ input: String = "") -> String {
         let arguments: [String] = filter + [cmd] + self.overrides + params
         var output: String = ""
         let queueStart = Date()
