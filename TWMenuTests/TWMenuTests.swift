@@ -12,12 +12,12 @@ import XCTest
 class TWMenuTests: XCTestCase {
     lazy var tw = TWMenu(arguments: ["rc.data.location=task"])
     lazy var menu = tw.getMenu("taskrc")
-    lazy var task = SwiftTaskWarrior(overrides: ["rc.data.location=task"], environment: ["TASKRC": "taskrc"])
+    lazy var war = SwiftTaskWarrior(overrides: ["rc.data.location=task"], environment: ["TASKRC": "taskrc"])
     
     override func setUp() {
         super.setUp()
         
-        task.show()
+        war.show()
     }
     
     override func tearDown() {
@@ -46,8 +46,8 @@ class TWMenuTests: XCTestCase {
     
     func testSimpleTasks() {
         // Having
-        _ = task.add(description: "simple task no 1")
-        _ = task.add(description: "simple task no 2")
+        _ = war.add(description: "simple task no 1")
+        _ = war.add(description: "simple task no 2")
         
         // When
         tw.menuWillOpen(menu)
@@ -68,11 +68,11 @@ class TWMenuTests: XCTestCase {
     
     func testFiltering() {
         // Having
-        task.config(key: "pomodoro.defaultFilter", val: "-BLOCKED +next")
+        war.config(key: "pomodoro.defaultFilter", val: "-BLOCKED +next")
         
         // add tasks
-        guard let id = task.add(["blocker taks 01", "+next"]) else { XCTFail(); return }
-        _ = task.add(["blocked task 01", "+next", "depend:\(id)"])
+        guard let id = war.add(["blocker taks 01", "+next"]) else { XCTFail(); return }
+        _ = war.add(["blocked task 01", "+next", "depend:\(id)"])
         
         // When
         tw.menuWillOpen(menu)
@@ -91,14 +91,14 @@ class TWMenuTests: XCTestCase {
     
     func testPomsLoggedAndStopped() {
         // Having
-        guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
-        task.log(["PomodoroLog"])
-        let uuid = task.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = task.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = task.uuids(filter: ["\(id2)"]).first!
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
+        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
+        war.log(["PomodoroLog"])
+        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
+        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
         
         // When
         tw.menuWillOpen(menu)
@@ -120,18 +120,18 @@ class TWMenuTests: XCTestCase {
     
     func testPomsLoggedWithLongBreakAndStopped() {
         // Having
-        guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
-        task.log(["PomodoroLog"])
-        let uuid = task.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = task.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = task.uuids(filter: ["\(id2)"]).first!
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
+        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
+        war.log(["PomodoroLog"])
+        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
+        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
         
         // When
         tw.menuWillOpen(menu)
@@ -153,14 +153,14 @@ class TWMenuTests: XCTestCase {
     
     func testPomsLoggedAndActive() {
         // Having
-        guard let id1 = task.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = task.add(description: "simple task no 2") else { XCTFail(); return }
-        task.log(["PomodoroLog"])
-        let uuid = task.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = task.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = task.uuids(filter: ["\(id2)"]).first!
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        task.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
+        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
+        war.log(["PomodoroLog"])
+        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
+        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
+        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
         
         // When
         tw.menuWillOpen(menu)
