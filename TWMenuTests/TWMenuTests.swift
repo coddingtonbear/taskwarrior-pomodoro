@@ -41,20 +41,16 @@ class TWMenuTests: XCTestCase {
         ]
         
         checkMenu(menu, properResults)
-        present(items: menu.items)
     }
     
     func testSimpleTasks() {
         // Having
-        _ = war.add(description: "simple task no 1")
-        _ = war.add(description: "simple task no 2")
+        _ = addTwoSimpleTasks()
         
         // When
         tw.menuWillOpen(menu)
         
         // Then
-        present(items: menu.items)
-        
         let properResults: [MenuIemTypes] = [
             .separator,
             .enabled("simple task no 1"),
@@ -78,7 +74,6 @@ class TWMenuTests: XCTestCase {
         tw.menuWillOpen(menu)
         
         // Then
-        present(items: menu.items)
         let properResults: [MenuIemTypes] = [
             .separator,
             .enabled("blocker taks 01"),
@@ -89,23 +84,20 @@ class TWMenuTests: XCTestCase {
         checkMenu(menu, properResults)
     }
     
+    lazy var pomodoroLogUUID: String = {
+        war.log(["PomodoroLog"])
+        return war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
+    }()
+    
     func testPomsLoggedAndStopped() {
         // Having
-        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
-        war.log(["PomodoroLog"])
-        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids, count: 1)
         
         // When
         tw.menuWillOpen(menu)
         
         // Then
-        present(items: menu.items)
-
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅"),
             .separator,
@@ -120,25 +112,13 @@ class TWMenuTests: XCTestCase {
     
     func testPomsLoggedWithLongBreakAndStopped() {
         // Having
-        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
-        war.log(["PomodoroLog"])
-        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids, count: 3)
         
         // When
         tw.menuWillOpen(menu)
         
         // Then
-        present(items: menu.items)
-        
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅🍅🍅-🍅🍅"),
             .separator,
@@ -153,25 +133,15 @@ class TWMenuTests: XCTestCase {
     
     func testPomsLoggedAndActive() {
         // Having
-        guard let id1 = war.add(description: "simple task no 1") else { XCTFail(); return }
-        guard let id2 = war.add(description: "simple task no 2") else { XCTFail(); return }
-        war.log(["PomodoroLog"])
-        let uuid = war.uuids(filter: ["status:Completed", "PomodoroLog", "entry:today", "limit:1"]).first!
-        let uuid1 = war.uuids(filter: ["\(id1)"]).first!
-        let uuid2 = war.uuids(filter: ["\(id2)"]).first!
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid1)")
-        war.annotate(filter: [uuid], text: "Pomodoro uuid:\(uuid2)")
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids, count: 1)
         
         // When
         tw.menuWillOpen(menu)
-        let items: [NSMenuItem] = menu.items
-        let filtered: [NSMenuItem] = items.filter { !$0.isHidden }.map { $0 as NSMenuItem }
-        let item = filtered[3]
-        tw.setActiveTaskViaMenu( item )
+        let taskItem = menu.items.filter { $0.title == "simple task no 2" }.first!
+        tw.setActiveTaskViaMenu( taskItem )
         
         // Then
-        present(items: menu.items)
-        
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅🍊"),
             .separator,
@@ -188,18 +158,27 @@ class TWMenuTests: XCTestCase {
     }
     
     // MARK: - workers
-    func present(items: [NSMenuItem]) {
-        let visible = menu.items.filter { !$0.isHidden }
-        print("")
-        for entry in visible {
-            present(entry: entry)
+    func addTwoSimpleTasks() -> [String] {
+        let ids = add(tasks: ["simple task no 1", "simple task no 2"])
+        
+        return war.uuids(filter: ids.map { String($0) } )
+    }
+    
+    func add(tasks: [String]) -> [Int] {
+        return tasks.map { war.add(description: $0)! }
+    }
+    
+    func log(tasks uuids: [String], count: Int) {
+        for _ in 0..<count {
+            war.annotate(filter: [pomodoroLogUUID], text: "Pomodoro uuid:\(uuids[0])")
+            war.annotate(filter: [pomodoroLogUUID], text: "Pomodoro uuid:\(uuids[1])")
         }
-        print("")
     }
     
     func checkMenu(_ menu: NSMenu, _ properResults: [MenuIemTypes]) {
         let visible = menu.items.filter { !$0.isHidden }
         guard visible.count == properResults.count else { XCTFail(); return }
+        present(items: menu.items)
         
         for entry in zip(visible, properResults) {
             XCTAssertEqual(entry.1.isEnabled, entry.0.isEnabled, "is enabled")
@@ -242,11 +221,25 @@ class TWMenuTests: XCTestCase {
             }
         }
     }
-    
-    func `present`(entry: NSMenuItem) {
-        let e = entry.isEnabled ? "E":"D"
-        let title = entry.isSeparatorItem ? "---------------------":entry.title
-        print("- \(e) \(title) \(e)")
+}
+
+extension NSMenu {
+    func print() {
+        present(items: self.items)
     }
-    
+}
+
+func present(items: [NSMenuItem]) {
+    let visible = items.filter { !$0.isHidden }
+    print("")
+    for entry in visible {
+        present(entry: entry)
+    }
+    print("")
+}
+
+func `present`(entry: NSMenuItem) {
+    let e = entry.isEnabled ? "E":"D"
+    let title = entry.isSeparatorItem ? "---------------------":entry.title
+    print("- \(e) \(title) \(e)")
 }
