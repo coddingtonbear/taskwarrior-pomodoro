@@ -20,7 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // MARK: - ### NSApplicationDelegate ###
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        statusItem.menu = twMenu.getMenu()
+        statusItem.menu = twMenu.menu
         statusItem.button?.image = twMenu.image
     }
 }

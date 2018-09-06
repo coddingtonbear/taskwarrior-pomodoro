@@ -7,11 +7,11 @@
 //
 
 import XCTest
-@testable import TWMenu
+import TWMenu
 
 class TWMenuTests: XCTestCase {
-    lazy var tw = TWMenu(arguments: ["rc.data.location=task"])
-    lazy var menu = tw.getMenu("taskrc")
+    lazy var tw = TWMenu(arguments: ["rc.data.location=task"], config: "taskrc")
+    lazy var menu = tw.menu
     lazy var war = SwiftTaskWarrior(overrides: ["rc.data.location=task"], environment: ["TASKRC": "taskrc"])
     
     override func setUp() {
@@ -28,7 +28,6 @@ class TWMenuTests: XCTestCase {
     
     func testEmptyDataOverride() {
         // Having
-        let menu = tw.getMenu("task")
         
         // When
         tw.menuWillOpen(menu)

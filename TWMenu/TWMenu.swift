@@ -14,8 +14,59 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     var taskPath = ""
     //MARK: - Attributes
     
-    let menu = NSMenu()
+    public lazy private(set) var menu: NSMenu = {
+        let menu = NSMenu()
+        
+        NSUserNotificationCenter.default.delegate = self
+        menu.autoenablesItems = false
+        
+        do {
+            configuration = try getConfigurationSettings(configPath)
+        } catch FileError.fileNotFound(let file_path) {
+            let alert: NSAlert = NSAlert();
+            alert.messageText = "Configuration file not found";
+            alert.informativeText = "Your taskwarrior configuration file could not be found at \(file_path).";
+            alert.runModal();
+            exit(1);
+        } catch FileError.fileEmpty {
+            // This is probably fine
+        } catch {
+            let alert: NSAlert = NSAlert();
+            alert.messageText = "Unexpected error";
+            alert.informativeText = "An error was encountered while loading your configuration.";
+            alert.runModal();
+            exit(1);
+        }
+        
+        let fileManager = FileManager.default
+        var pathOptions = [
+            "/usr/local/bin/task",
+            "/usr/bin/task",
+            "/opt/local/bin/task",
+            ]
+        if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
+            pathOptions = [configuredPath]
+        }
+        
+        for pathOption in pathOptions {
+            if fileManager.fileExists(atPath: pathOption) {
+                taskPath = pathOption
+                break
+            }
+        }
+        if taskPath == "" {
+            let pathOptionsString = pathOptions.joined(separator: ", ")
+            fatalError(
+                "Could not find taskwarrior in \(pathOptionsString)"
+            )
+        }
+        
+        menu.delegate = self
+        return menu
+    }()
+    
     let overrides: [String]
+    let configPath: String
     
     var activeTaskId: String? = nil
     var activeTimer: Timer? = nil
@@ -63,13 +114,15 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     let kStopTitleFormat = "Stop (%02u:%02u remaining)"
     let kActiveTitlePrefix = "Active: "
     
-    public init(arguments: [String]) {
-        self.overrides = arguments
+    public init(arguments: [String], config path: String = "~/.taskrc") {
+        configPath = path
+        overrides = arguments
         super.init()
     }
     
     public override init() {
-        self.overrides = []
+        configPath = "~/.taskrc"
+        overrides = []
         super.init()
     }
     
@@ -95,54 +148,6 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     
     
     //MARK: - ### Public API ###
-    public func getMenu(_ path: String = "~/.taskrc") -> NSMenu {
-        NSUserNotificationCenter.default.delegate = self
-        menu.autoenablesItems = false
-        
-        do {
-            configuration = try getConfigurationSettings(path)
-        } catch FileError.fileNotFound(let file_path) {
-            let alert: NSAlert = NSAlert();
-            alert.messageText = "Configuration file not found";
-            alert.informativeText = "Your taskwarrior configuration file could not be found at \(file_path).";
-            alert.runModal();
-            exit(1);
-        } catch FileError.fileEmpty {
-            // This is probably fine
-        } catch {
-            let alert: NSAlert = NSAlert();
-            alert.messageText = "Unexpected error";
-            alert.informativeText = "An error was encountered while loading your configuration.";
-            alert.runModal();
-            exit(1);
-        }
-        
-        let fileManager = FileManager.default
-        var pathOptions = [
-            "/usr/local/bin/task",
-            "/usr/bin/task",
-            "/opt/local/bin/task",
-            ]
-        if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
-            pathOptions = [configuredPath]
-        }
-        
-        for pathOption in pathOptions {
-            if fileManager.fileExists(atPath: pathOption) {
-                taskPath = pathOption
-                break
-            }
-        }
-        if taskPath == "" {
-            let pathOptionsString = pathOptions.joined(separator: ", ")
-            fatalError(
-                "Could not find taskwarrior in \(pathOptionsString)"
-            )
-        }
-        
-        menu.delegate = self
-        return menu
-    }
     
     //MARK: - ### Private API ###
     func startCountdownTimer() {
