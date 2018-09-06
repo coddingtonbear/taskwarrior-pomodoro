@@ -138,8 +138,7 @@ class TWMenuTests: XCTestCase {
         
         // When
         tw.menuWillOpen(menu)
-        let taskItem = menu.items.filter { $0.title == "simple task no 2" }.first!
-        tw.setActiveTaskViaMenu( taskItem )
+        tw.select(item: By(title: "simple task no 2"))
         
         // Then
         let properResults: [MenuIemTypes] = [
@@ -164,18 +163,40 @@ class TWMenuTests: XCTestCase {
         
         // When
         tw.menuWillOpen(menu)
-        // - Activate
-        let taskItem = menu.items.filter { $0.title == "simple task no 2" }.first!
-        tw.setActiveTaskViaMenu( taskItem )
+        tw.select(item: By(title: "simple task no 2"))
         
-        // - Stop
         menu.print()
-        let stopItem = menu.items.filter { $0.title.starts(with: "Stop") }.first!
-        tw.stopActiveTask( stopItem )
+        tw.select(item: By(titleStart: "Stop"))
         
         // Then
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testSwitchingIntoAnotherTask() {
+        // Having
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids, count: 1)
+        
+        // When
+        tw.menuWillOpen(menu)
+        tw.select(item: By(title: "simple task no 2"))
+        tw.select(item: By(title: "simple task no 1"))
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅🍊"),
+            .separator,
+            .disabled("Active:  simple task no 1"),
+            .enabled("Stop (25:00 remaining)"),
             .separator,
             .enabled("simple task no 1"),
             .enabled("simple task no 2"),
@@ -250,6 +271,28 @@ class TWMenuTests: XCTestCase {
             }
         }
     }
+}
+
+extension TWMenu {
+    func select(item by: By) {
+        switch (by) {
+        case .title(let itemName):
+            let index = self.menu.indexOfItem(withTitle: itemName)
+            self.menu.performActionForItem(at: index)
+        case .titleStart(let itemName):
+            let item = menu.items.filter { $0.title.starts(with: itemName) }.first!
+            let index = self.menu.index(of: item)
+            self.menu.performActionForItem(at: index)
+        }
+    }
+}
+
+enum By {
+    init (title a: String) { self = .title(a) }
+    init (titleStart a: String) { self = .titleStart(a) }
+    
+    case title(String)
+    case titleStart(String)
 }
 
 extension NSMenu {
