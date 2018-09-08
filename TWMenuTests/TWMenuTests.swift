@@ -138,14 +138,14 @@ class TWMenuTests: XCTestCase {
         // When
         tw.menuWillOpen(menu)
         tw.select(item: By(title: "simple task no 2"))
+        tw.update()
         
         // Then
-        menu.print()
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅🍊"),
             .separator,
             .disabled("Active:  simple task no 2"),
-            .enabled("Stop (25:00 remaining)"),
+            .enabled("Stop (24:59 remaining)"),
             .separator,
             .enabled("simple task no 1"),
             .enabled("simple task no 2"),
@@ -164,8 +164,6 @@ class TWMenuTests: XCTestCase {
         // When
         tw.menuWillOpen(menu)
         tw.select(item: By(title: "simple task no 2"))
-        
-        menu.print()
         tw.stop()
         
         // Then
@@ -190,13 +188,39 @@ class TWMenuTests: XCTestCase {
         tw.menuWillOpen(menu)
         tw.select(item: By(title: "simple task no 2"))
         tw.select(item: By(title: "simple task no 1"))
+        tw.update()
         
         // Then
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅🍊"),
             .separator,
             .disabled("Active:  simple task no 1"),
-            .enabled("Stop (25:00 remaining)"),
+            .enabled("Stop (24:59 remaining)"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testFullPomDone() {
+        // Having
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids)
+        
+        // When
+        war.config(key: "pomodoro.durationSeconds", val: "1")
+        tw.menuWillOpen(menu)
+        tw.select(item: By(title: "simple task no 2"))
+        tw.timerExpired()
+        tw.menuWillOpen(menu)
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅🍅"),
             .separator,
             .enabled("simple task no 1"),
             .enabled("simple task no 2"),
@@ -291,6 +315,10 @@ extension TWMenu {
         case .titleStart(let itemName):
             return self.menu.items.filter { $0.title.starts(with: itemName) }.first!
         }
+    }
+    
+    func update() {
+        self.updateTaskTimer()
     }
 }
 

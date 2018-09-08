@@ -718,7 +718,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         return output ?? ""
     }
     
-    @objc func timerExpired() {
+    @objc public func timerExpired() {
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
@@ -780,13 +780,16 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         setActiveTask(sender.representedObject as! String)
     }
     
-    @objc func updateTaskTimer() {
+    @objc public func updateTaskTimer() {
         let date = Date()
-        
-        let minutesFrom = activeTimerEnds?.minutesFrom(date) ?? 25
-        let secondsFrom = (activeTimerEnds?.secondsFrom(date) ?? 1500) - minutesFrom * 60
-        
-        getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
+        if let timer = activeTimerEnds {
+            let minutesFrom = timer.minutesFrom(date)
+            let secondsFrom = (timer.secondsFrom(date)) - minutesFrom * 60
+            
+            getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
+        } else {
+            getStopTaskMenuItem().title = "Stop"
+        }
     }
     
     @objc func exitNow(_ sender: Any) {
