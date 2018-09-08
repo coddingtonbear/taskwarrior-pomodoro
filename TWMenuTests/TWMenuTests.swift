@@ -91,7 +91,7 @@ class TWMenuTests: XCTestCase {
     func testPomsLoggedAndStopped() {
         // Having
         let uuids = addTwoSimpleTasks()
-        log(tasks: uuids, count: 1)
+        log(tasks: uuids)
         
         // When
         tw.menuWillOpen(menu)
@@ -112,7 +112,7 @@ class TWMenuTests: XCTestCase {
     func testPomsLoggedWithLongBreakAndStopped() {
         // Having
         let uuids = addTwoSimpleTasks()
-        log(tasks: uuids, count: 3)
+        log(tasks: uuids, repeat: 3)
         
         // When
         tw.menuWillOpen(menu)
@@ -133,13 +133,14 @@ class TWMenuTests: XCTestCase {
     func testPomsLoggedAndActive() {
         // Having
         let uuids = addTwoSimpleTasks()
-        log(tasks: uuids, count: 1)
+        log(tasks: uuids)
         
         // When
         tw.menuWillOpen(menu)
         tw.select(item: By(title: "simple task no 2"))
         
         // Then
+        menu.print()
         let properResults: [MenuIemTypes] = [
             .disabled("🍅🍅🍊"),
             .separator,
@@ -158,14 +159,14 @@ class TWMenuTests: XCTestCase {
     func testStoppingTaskEarly() {
         // Having
         let uuids = addTwoSimpleTasks()
-        log(tasks: uuids, count: 1)
+        log(tasks: uuids)
         
         // When
         tw.menuWillOpen(menu)
         tw.select(item: By(title: "simple task no 2"))
         
         menu.print()
-        tw.select(item: By(titleStart: "Stop"))
+        tw.stop()
         
         // Then
         let properResults: [MenuIemTypes] = [
@@ -183,7 +184,7 @@ class TWMenuTests: XCTestCase {
     func testSwitchingIntoAnotherTask() {
         // Having
         let uuids = addTwoSimpleTasks()
-        log(tasks: uuids, count: 1)
+        log(tasks: uuids)
         
         // When
         tw.menuWillOpen(menu)
@@ -217,7 +218,7 @@ class TWMenuTests: XCTestCase {
         return tasks.map { war.add(description: $0)! }
     }
     
-    func log(tasks uuids: [String], count: Int) {
+    func log(tasks uuids: [String], repeat count: Int = 1) {
         for _ in 0..<count {
             war.annotate(filter: [pomodoroLogUUID], text: "Pomodoro uuid:\(uuids[0])")
             war.annotate(filter: [pomodoroLogUUID], text: "Pomodoro uuid:\(uuids[1])")
@@ -274,14 +275,21 @@ class TWMenuTests: XCTestCase {
 
 extension TWMenu {
     func select(item by: By) {
+        let task = get(item: by)
+        self.setActiveTaskViaMenu(task)
+    }
+    
+    func stop() {
+        let stop = get(item: By(titleStart: "Stop"))
+        self.stopActiveTask(stop)
+    }
+    
+    func get(item by: By) -> NSMenuItem {
         switch (by) {
         case .title(let itemName):
-            let index = self.menu.indexOfItem(withTitle: itemName)
-            self.menu.performActionForItem(at: index)
+            return self.menu.items.filter { $0.title == itemName }.first!
         case .titleStart(let itemName):
-            let item = menu.items.filter { $0.title.starts(with: itemName) }.first!
-            let index = self.menu.index(of: item)
-            self.menu.performActionForItem(at: index)
+            return self.menu.items.filter { $0.title.starts(with: itemName) }.first!
         }
     }
 }

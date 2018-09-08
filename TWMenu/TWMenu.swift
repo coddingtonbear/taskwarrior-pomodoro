@@ -772,11 +772,11 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     }
     
     // MARK: - Actions
-    @objc func stopActiveTask(_ sender: Any) {
+    @objc public func stopActiveTask(_ sender: Any) {
         stopActiveTask()
     }
     
-    @objc func setActiveTaskViaMenu(_ sender: AnyObject) {
+    @objc public func setActiveTaskViaMenu(_ sender: AnyObject) {
         setActiveTask(sender.representedObject as! String)
     }
     

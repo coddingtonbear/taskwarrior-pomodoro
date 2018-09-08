@@ -255,7 +255,6 @@
 					};
 					F35F2E9821340626005C7469 = {
 						CreatedOnToolsVersion = 9.4;
-						TestTargetID = 4C879AE01C13BDF8000C3F84;
 					};
 				};
 			};
@@ -597,7 +596,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 4.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taskwarrior Pomodoro.app/Contents/MacOS/Taskwarrior Pomodoro";
 			};
 			name = Debug;
 		};
@@ -624,7 +622,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 4.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Taskwarrior Pomodoro.app/Contents/MacOS/Taskwarrior Pomodoro";
 			};
 			name = Release;
 		};
