@@ -9,6 +9,18 @@
 import XCTest
 import TWMenu
 
+class TestDelegate: TWMenuDelegate {
+    let onQuit: ()->()
+    
+    init (block: @escaping ()->()) {
+            onQuit = block
+    }
+    
+    func letsQuit() {
+        onQuit()
+    }
+}
+
 class TWMenuTests: XCTestCase {
     lazy var tw = TWMenu(arguments: ["rc.data.location=task"], config: "taskrc")
     lazy var menu = tw.menu
@@ -231,6 +243,154 @@ class TWMenuTests: XCTestCase {
         checkMenu(menu, properResults)
     }
     
+    func testConfiguration() {
+        // + pomodoro.displayCount
+        // + pomodoro.defaultFilter
+        // + pomodoro.default.sort
+        // ? pomodoro.taskwarrior_path
+        // + taskd.server
+        // ? data.location
+        // ? pomodoro.postCompletionCommand
+        // - pomodoro.durationSeconds
+    }
+    
+    func testConfiguration_Log() {
+        // Having
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids)
+        
+        // When
+        war.config(key: "pomodoro.displayCount", val: "0")
+        tw.menuWillOpen(menu)
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testConfiguration_Sort() {
+        // Having
+        war.config(key: "pomodoro.default.sort", val: "urgency+")
+        
+        // add tasks
+        _ = war.add(["task 01", "+next"])
+        _ = war.add(["task 02"])
+        
+        // When
+        tw.menuWillOpen(menu)
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("task 02"),
+            .enabled("task 01"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testConfiguration_server() {
+        // Having
+        _ = addTwoSimpleTasks()
+        
+        // When
+        war.config(key: "taskd.server", val: "there.is.one")
+        tw.menuWillOpen(menu)
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Synchronize"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testConfiguration_duration() {
+        // Having
+        let uuids = addTwoSimpleTasks()
+        log(tasks: uuids)
+        
+        // When
+        war.config(key: "pomodoro.durationSeconds", val: "10")
+        tw.menuWillOpen(menu)
+        tw.select(item: By(title: "simple task no 2"))
+        tw.update()
+        
+        // Then
+        let properResults: [MenuIemTypes] = [
+            .disabled("🍅🍅🍊"),
+            .separator,
+            .disabled("Active:  simple task no 2"),
+            .enabled("Stop (00:09 remaining)"),
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        checkMenu(menu, properResults)
+    }
+    
+    func testQuitingApp() {
+        // Having
+        let exp = expectation(description: "We did quit properly")
+        
+        // When
+        tw.onQuit = { exp.fulfill() }
+        tw.menuWillOpen(menu)
+        tw.quit()
+        
+        // Then
+        waitForExpectations(timeout: 0.1)
+    }
+    
+    func testClosingMenu() {
+        // Having
+        
+        // When
+        tw.menuWillOpen(menu)
+        tw.menuDidClose(menu)
+        
+        // Then
+    }
+    
+    func testReoppeningMenu() {
+        // Having
+        _ = addTwoSimpleTasks()
+        let properResults: [MenuIemTypes] = [
+            .separator,
+            .enabled("simple task no 1"),
+            .enabled("simple task no 2"),
+            .separator,
+            .enabled("Quit Taskwarrior Pomodoro")
+        ]
+        
+        // When
+        tw.menuWillOpen(menu)
+        checkMenu(menu, properResults)
+        
+        // Then
+        tw.menuDidClose(menu)
+        tw.menuWillOpen(menu)
+        checkMenu(menu, properResults)
+    }
+    
     // MARK: - workers
     func addTwoSimpleTasks() -> [String] {
         let ids = add(tasks: ["simple task no 1", "simple task no 2"])
@@ -306,6 +466,11 @@ extension TWMenu {
     func stop() {
         let stop = get(item: By(titleStart: "Stop"))
         self.stopActiveTask(stop)
+    }
+    
+    func quit() {
+        let quit = get(item: By(titleStart: "Quit"))
+        self.exitNow(quit)
     }
     
     func get(item by: By) -> NSMenuItem {

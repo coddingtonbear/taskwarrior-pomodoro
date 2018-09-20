@@ -96,6 +96,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         return NSImage(named: NSImage.Name(rawValue: imageName))
     }()
     
+    public var onQuit: (()->())?
     
     //MARK: - Menu Items Tags
     let kTimerItemTag = 1
@@ -792,8 +793,8 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         }
     }
     
-    @objc func exitNow(_ sender: Any) {
-        NSApplication.shared.terminate(self)
+    @objc public func exitNow(_ sender: Any) {
+        onQuit?()
     }
 }
 

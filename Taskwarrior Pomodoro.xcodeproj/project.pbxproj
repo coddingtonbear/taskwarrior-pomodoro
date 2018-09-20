@@ -18,6 +18,7 @@
 		F35F2EAF21340630005C7469 /* TWMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3147887212E2076007746EB /* TWMenu.swift */; };
 		F35F2EB021340682005C7469 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */; };
 		F35F2ED92135977A005C7469 /* SwiftTaskWarrior.swift in Sources */ = {isa = PBXBuildFile; fileRef = F35F2ED82135977A005C7469 /* SwiftTaskWarrior.swift */; };
+		F3B1F42D2145519E009C732B /* TWMenuDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B1F42C2145519E009C732B /* TWMenuDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		F35F2EA021340626005C7469 /* TWMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TWMenuTests.swift; sourceTree = "<group>"; };
 		F35F2EA221340626005C7469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F35F2ED82135977A005C7469 /* SwiftTaskWarrior.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTaskWarrior.swift; sourceTree = "<group>"; };
+		F3B1F42C2145519E009C732B /* TWMenuDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TWMenuDelegate.swift; sourceTree = "<group>"; };
 		F3E3A6D021286EE300E7A428 /* changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = changelog.md; sourceTree = "<group>"; };
 		F3E3A6D121286EE300E7A428 /* readme.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -140,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				F3147887212E2076007746EB /* TWMenu.swift */,
+				F3B1F42C2145519E009C732B /* TWMenuDelegate.swift */,
 				4C879AF31C13CD00000C3F84 /* SwiftyJSON.swift */,
 				F35F2E9321340626005C7469 /* TWMenu.h */,
 				F35F2E9421340626005C7469 /* Info.plist */,
@@ -318,6 +321,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F35F2EAF21340630005C7469 /* TWMenu.swift in Sources */,
+				F3B1F42D2145519E009C732B /* TWMenuDelegate.swift in Sources */,
 				F35F2EB021340682005C7469 /* SwiftyJSON.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

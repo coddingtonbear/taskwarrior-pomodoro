@@ -22,6 +22,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         statusItem.menu = twMenu.menu
         statusItem.button?.image = twMenu.image
+        twMenu.onQuit = {
+            NSApplication.shared.terminate(self)
+        }
     }
 }
 
