@@ -14,93 +14,14 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     var taskPath = ""
     //MARK: - Attributes
     
-    let menu = NSMenu()
-    let overrides: [String]
-    
-    var activeTaskId: String? = nil
-    var activeTimer: Timer? = nil
-    var activeTimerEnds: Date? = nil
-    var activeMenuItem: NSMenuItem? = nil
-    var pomodoroDuration: Double = 60 * 25
-    var configuration: [String: String]? = nil
-    var activeCountdownTimer: Timer? = nil
-    var currentPomodorosLogUUID: String?
-    var pomsPerLongBreak: Int = 4
-    var activeTaskPomodorosLogUUID: String?
-    var pendingTasksMtime: Date? = nil
-    var pendingTasks: [JSON] = []
-    
-    
-    let kPomodoroLogEntryDescription = "PomodoroLog"
-    let kPomsLongBreakCharacter = "-"
-    let kPomsPomDoneCharacter = "🍅"
-    let kPomsActiveCharacter = "🍊"
-    
-    public private(set) var image: NSImage? = {
-        #if DEBUG
-        let imageName = "StatusBarButtonImageDevelopment"
-        #else
-        let imageName = "StatusBarButtonImage"
-        #endif
-        return NSImage(named: NSImage.Name(rawValue: imageName))
-    }()
-    
-    
-    //MARK: - Menu Items Tags
-    let kTimerItemTag = 1
-    let kActiveTaskSeparator1ItemTag = 2
-    let kActiveTaskMenuItemTag = 3
-    let kStopTaskMenuItemTag = 4
-    let kActiveTaskSeparator2ItemTag = 5
-    let kPendingTaskMenuItemTag = 6;
-    let kQuitSeparatorMenuItemTag = 7;
-    let kQuitMenuItemTag = 8;
-    let kSyncSeparatorMenuItemTag = 7;
-    let kSyncMenuItemTag = 9;
-    let kPomodorosCountMenuItemTag = 10
-    
-    //MARK: - Menu Items Titles
-    let kStopTitleFormat = "Stop (%02u:%02u remaining)"
-    let kActiveTitlePrefix = "Active: "
-    
-    public init(arguments: [String]) {
-        self.overrides = arguments
-        super.init()
-    }
-    
-    public override init() {
-        self.overrides = []
-        super.init()
-    }
-    
-    // MARK: - ### NSUserNotificationCenterDelegate ###
-    public func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
-        return true
-    }
-    
-    public func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-        let taskId = notification.userInfo!["taskId"] as! String
-        setActiveTask(taskId)
-    }
-    
-    //MARK: - ### NSMenuDelegate ###
-    public func menuWillOpen(_ menu: NSMenu) {
-        updateMenuItems();
-        startCountdownTimer()
-    }
-    
-    public func menuDidClose(_ menu: NSMenu) {
-        stopCountdownTimer()
-    }
-    
-    
-    //MARK: - ### Public API ###
-    public func getMenu(_ path: String = "~/.taskrc") -> NSMenu {
+    public lazy private(set) var menu: NSMenu = {
+        let menu = NSMenu()
+        
         NSUserNotificationCenter.default.delegate = self
         menu.autoenablesItems = false
         
         do {
-            configuration = try getConfigurationSettings(path)
+            configuration = try getConfigurationSettings(configPath)
         } catch FileError.fileNotFound(let file_path) {
             let alert: NSAlert = NSAlert();
             alert.messageText = "Configuration file not found";
@@ -142,7 +63,92 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         
         menu.delegate = self
         return menu
+    }()
+    
+    let overrides: [String]
+    let configPath: String
+    
+    var activeTaskId: String? = nil
+    var activeTimer: Timer? = nil
+    var activeTimerEnds: Date? = nil
+    var activeMenuItem: NSMenuItem? = nil
+    var pomodoroDuration: Double = 60 * 25
+    var configuration: [String: String]? = nil
+    var activeCountdownTimer: Timer? = nil
+    var currentPomodorosLogUUID: String?
+    var pomsPerLongBreak: Int = 4
+    var activeTaskPomodorosLogUUID: String?
+    var pendingTasksMtime: Date? = nil
+    var pendingTasks: [JSON] = []
+    
+    
+    let kPomodoroLogEntryDescription = "PomodoroLog"
+    let kPomsLongBreakCharacter = "-"
+    let kPomsPomDoneCharacter = "🍅"
+    let kPomsActiveCharacter = "🍊"
+    
+    public private(set) var image: NSImage? = {
+        #if DEBUG
+        let imageName = "StatusBarButtonImageDevelopment"
+        #else
+        let imageName = "StatusBarButtonImage"
+        #endif
+        return NSImage(named: NSImage.Name(rawValue: imageName))
+    }()
+    
+    public var onQuit: (()->())?
+    
+    //MARK: - Menu Items Tags
+    let kTimerItemTag = 1
+    let kActiveTaskSeparator1ItemTag = 2
+    let kActiveTaskMenuItemTag = 3
+    let kStopTaskMenuItemTag = 4
+    let kActiveTaskSeparator2ItemTag = 5
+    let kPendingTaskMenuItemTag = 6;
+    let kQuitSeparatorMenuItemTag = 7;
+    let kQuitMenuItemTag = 8;
+    let kSyncSeparatorMenuItemTag = 7;
+    let kSyncMenuItemTag = 9;
+    let kPomodorosCountMenuItemTag = 10
+    
+    //MARK: - Menu Items Titles
+    let kStopTitleFormat = "Stop (%02u:%02u remaining)"
+    let kActiveTitlePrefix = "Active: "
+    
+    public init(arguments: [String], config path: String = "~/.taskrc") {
+        configPath = path
+        overrides = arguments
+        super.init()
     }
+    
+    public override init() {
+        configPath = "~/.taskrc"
+        overrides = []
+        super.init()
+    }
+    
+    // MARK: - ### NSUserNotificationCenterDelegate ###
+    public func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
+        return true
+    }
+    
+    public func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
+        let taskId = notification.userInfo!["taskId"] as! String
+        setActiveTask(taskId)
+    }
+    
+    //MARK: - ### NSMenuDelegate ###
+    public func menuWillOpen(_ menu: NSMenu) {
+        updateMenuItems();
+        startCountdownTimer()
+    }
+    
+    public func menuDidClose(_ menu: NSMenu) {
+        stopCountdownTimer()
+    }
+    
+    
+    //MARK: - ### Public API ###
     
     //MARK: - ### Private API ###
     func startCountdownTimer() {
@@ -654,10 +660,6 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         taskCommand(["sync"])
     }
     
-    @objc func stopActiveTask(_ sender: Any) {
-        stopActiveTask()
-    }
-    
     func stopActiveTask() {
         if activeTimer != nil {
             activeTimer!.invalidate()
@@ -717,7 +719,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         return output ?? ""
     }
     
-    @objc func timerExpired() {
+    @objc public func timerExpired() {
         if activeTimer != nil {
             activeTimer!.invalidate()
             activeTimer = nil
@@ -771,21 +773,28 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
     }
     
     // MARK: - Actions
-    @objc func setActiveTaskViaMenu(_ sender: AnyObject) {
+    @objc public func stopActiveTask(_ sender: Any) {
+        stopActiveTask()
+    }
+    
+    @objc public func setActiveTaskViaMenu(_ sender: AnyObject) {
         setActiveTask(sender.representedObject as! String)
     }
     
-    @objc func updateTaskTimer() {
+    @objc public func updateTaskTimer() {
         let date = Date()
-        
-        let minutesFrom = activeTimerEnds?.minutesFrom(date) ?? 25
-        let secondsFrom = (activeTimerEnds?.secondsFrom(date) ?? 1500) - minutesFrom * 60
-        
-        getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
+        if let timer = activeTimerEnds {
+            let minutesFrom = timer.minutesFrom(date)
+            let secondsFrom = (timer.secondsFrom(date)) - minutesFrom * 60
+            
+            getStopTaskMenuItem().title = String(format: kStopTitleFormat, minutesFrom, secondsFrom)
+        } else {
+            getStopTaskMenuItem().title = "Stop"
+        }
     }
     
-    @objc func exitNow(_ sender: Any) {
-        NSApplication.shared.terminate(self)
+    @objc public func exitNow(_ sender: Any) {
+        onQuit?()
     }
 }
 
