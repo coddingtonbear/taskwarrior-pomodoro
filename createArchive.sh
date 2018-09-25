@@ -10,8 +10,9 @@ xcodebuild -scheme "$appName" -archivePath "$appArchivePath" archive
 xcrun xcodebuild -exportArchive -exportOptionsPlist exportOptions.plist -archivePath "$appArchivePath" -exportPath "builds/distribute"
 
 spctl -a -v "builds/distribute/$appName.app"
+echo ""
 
-hdiutil create -size 12m -fs HFS+ -volname "$appName" $tempPackagePath
+hdiutil create -size 14m -fs HFS+ -volname "$appName" $tempPackagePath
 hdiutil attach $tempPackagePath
 
 ln -s /Applications "/Volumes/$appName/"
