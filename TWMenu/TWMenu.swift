@@ -93,7 +93,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         #else
         let imageName = "StatusBarButtonImage"
         #endif
-        return NSImage(named: NSImage.Name(rawValue: imageName))
+        return NSImage(named: imageName)
     }()
     
     public var onQuit: (()->())?
@@ -160,7 +160,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
                 userInfo: nil,
                 repeats: true
             )
-            RunLoop.current.add(self.activeCountdownTimer!, forMode: RunLoopMode.eventTrackingRunLoopMode)
+            RunLoop.current.add(self.activeCountdownTimer!, forMode: RunLoop.Mode.eventTracking)
         }
     }
     
@@ -766,7 +766,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         }
         
         activeTimer = Timer(timeInterval: pomodoroDuration, target: self, selector: #selector(TWMenu.timerExpired), userInfo: nil, repeats: false)
-        RunLoop.current.add(activeTimer!, forMode: .commonModes)
+        RunLoop.current.add(activeTimer!, forMode: RunLoop.Mode.common)
         
         let now = Date()
         activeTimerEnds = now.addingTimeInterval(pomodoroDuration);
