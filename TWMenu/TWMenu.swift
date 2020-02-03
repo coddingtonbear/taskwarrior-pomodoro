@@ -250,12 +250,28 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         clearOldTasks()
         
         let tasks = getPendingTasks();
+        var prefix_project = false
+        var prefix_separator = " - "
+
+        if configuration!["pomodoro.prefixProject"] != nil {
+            prefix_project = true
+        }
+        if let separator = configuration!["pomodoro.prefixSeparator"] {
+            prefix_separator = separator.replacingOccurrences(of: "\"", with: "")
+        }
         
         for task in tasks {
+            var title = ""
+            if prefix_project {
+                if let project = task["project"].string {
+                    title = project + prefix_separator
+                }
+            }
             if let description = task["description"].string {
+                title = title + description
                 if let uuid = task["uuid"].string {
                     let menuItem = NSMenuItem(
-                        title: description,
+                        title: title,
                         action: #selector(TWMenu.setActiveTaskViaMenu(_:)),
                         keyEquivalent: ""
                     )
@@ -637,6 +653,16 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
             return "N/A"
         }
         
+        var prefix_project = false
+        var prefix_separator = " - "
+
+        if configuration!["pomodoro.prefixProject"] != nil {
+            prefix_project = true
+        }
+        if let separator = configuration!["pomodoro.prefixSeparator"] {
+            prefix_separator = separator.replacingOccurrences(of: "\"", with: "")
+        }
+
         var description: String = "N/A"
         
         let filter = [activeTaskId!, "limit:1"]
@@ -646,6 +672,11 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
             let taskData = tasks[0]
             if let thisDescription = taskData["description"].string {
                 description = thisDescription
+            }
+            if prefix_project {
+                if let thisProject = taskData["project"].string {
+                    description = thisProject + prefix_separator + description
+                }
             }
         }
         
