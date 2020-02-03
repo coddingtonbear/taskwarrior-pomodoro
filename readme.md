@@ -67,3 +67,12 @@ By default, Taskwarrior Pomodoro uses standard 25-minute (1,500 second) pomodoro
 ```
 pomodoro.durationSeconds=2700
 ```
+
+### Task project
+
+By default, Taskwarrior Pomodoro do not include project name in task list. If you need tasks to be prefixed by project names, and to customize default separator symbol you could set following setting as follows:
+
+```
+pomodoro.prefixProject=1
+pomodoro.prefixSeparator=" - "
+```
