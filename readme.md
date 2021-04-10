@@ -76,3 +76,12 @@ By default, Taskwarrior Pomodoro do not include project name in task list. If yo
 pomodoro.prefixProject=1
 pomodoro.prefixSeparator=" - "
 ```
+
+If you need tasks to be grouped by project name, the following options can be customized:
+
+```
+pomodoro.groupByProject=1
+pomodoro.prefixSeparator="  "
+```
+
+Grouping by project will sort projects alphabetically, with tasks sorted internally by the sort order.

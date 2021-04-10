@@ -246,6 +246,36 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         menu.addItem(quitMenuItem)
     }
     
+    func createProjectMenuItem(title: String) {
+        let menuItem = NSMenuItem(
+            title: title,
+            action: nil,
+            keyEquivalent: ""
+        )
+        menuItem.isEnabled = false
+        menuItem.tag = kActiveTaskMenuItemTag
+        
+        let index = menu.indexOfItem(withTag: kSyncSeparatorMenuItemTag)
+        menu.insertItem(menuItem, at: index)
+    }
+    
+    func createTaskMenuItem(task: JSON, title: String) {
+        if let uuid = task["uuid"].string {
+            let menuItem = NSMenuItem(
+                title: title,
+                action: #selector(TWMenu.setActiveTaskViaMenu(_:)),
+                keyEquivalent: ""
+            )
+            menuItem.representedObject = uuid
+            menuItem.tag = kPendingTaskMenuItemTag
+            menuItem.target = self
+            menuItem.isEnabled = true
+            
+            let index = menu.indexOfItem(withTag: kSyncSeparatorMenuItemTag)
+            menu.insertItem(menuItem, at: index)
+        }
+    }
+    
     func setupTaskListMenuItems() {
         clearOldTasks()
         
@@ -260,27 +290,42 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
             prefix_separator = separator.replacingOccurrences(of: "\"", with: "")
         }
         
-        for task in tasks {
-            var title = ""
-            if prefix_project {
-                if let project = task["project"].string {
-                    title = project + prefix_separator
+        if configuration!["pomodoro.groupByProject"] != nil {
+            var tasks_by_project: [String: [JSON]] = ["":[]]
+            for task in tasks {
+                let project = task["project"].string ?? "";
+                if tasks_by_project[project] == nil {
+                    tasks_by_project[project] = [task]
+                } else {
+                    tasks_by_project[project]?.append(task)
                 }
             }
-            if let description = task["description"].string {
-                title = title + description
-                if let uuid = task["uuid"].string {
-                    let menuItem = NSMenuItem(
-                        title: title,
-                        action: #selector(TWMenu.setActiveTaskViaMenu(_:)),
-                        keyEquivalent: ""
-                    )
-                    menuItem.representedObject = uuid
-                    menuItem.tag = kPendingTaskMenuItemTag
-                    menuItem.target = self
-                    let index = menu.indexOfItem(withTag: kSyncSeparatorMenuItemTag)
-                    menu.insertItem(menuItem, at: index)
-                    menuItem.isEnabled = true
+            
+            // this sorts tasks w/o a project first
+            // TODO: have an option to put these tasks last
+            for project in tasks_by_project.keys.sorted() {
+                // create the project label
+                if project != "" {
+                    createProjectMenuItem(title: project+":")
+                }
+                for task in tasks_by_project[project] ?? [] {
+                    if let description = task["description"].string {
+                        let title = project != "" ? prefix_separator + description : description
+                        createTaskMenuItem(task: task, title: title)
+                    }
+                }
+            }
+        } else {
+            for task in tasks {
+                var title = ""
+                if prefix_project {
+                    if let project = task["project"].string {
+                        title = project + prefix_separator
+                    }
+                }
+                if let description = task["description"].string {
+                    title = title + description
+                    createTaskMenuItem(task: task, title: title)
                 }
             }
         }
