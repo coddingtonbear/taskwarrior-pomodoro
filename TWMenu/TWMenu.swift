@@ -313,7 +313,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
                 } catch FileError.fileEmpty {
                     //ignore
                 }
-            } else if let equalIndex = line.index(of: "=" as Character) {
+            } else if let equalIndex = line.firstIndex(of: "=" as Character) {
                 let configurationKey = line[line.startIndex..<equalIndex].trimmingCharacters(in: .whitespaces)
                 let configurationValue = line[line.index(after: equalIndex)...].trimmingCharacters(in: .whitespaces)
                 
