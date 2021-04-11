@@ -767,6 +767,13 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
         notification.informativeText = "You've completed your pomodoro."
         notification.userInfo = ["taskId": taskId!]
         notification.soundName = NSUserNotificationDefaultSoundName
+        if let soundName = configuration!["pomodoro.soundName"] {
+            if soundName == "" {
+                notification.soundName = nil
+            } else {
+                notification.soundName = soundName
+            }
+        }
         notification.hasActionButton = true
         notification.actionButtonTitle = "Start Another"
         

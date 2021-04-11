@@ -68,6 +68,24 @@ By default, Taskwarrior Pomodoro uses standard 25-minute (1,500 second) pomodoro
 pomodoro.durationSeconds=2700
 ```
 
+### Pomodoro Sound Name
+
+By default, Taskwarrior Pomodoro uses the default system sound for notifications. This can be overridden by setting ``pomodoro.soundName`` to something in the search path path for sounds.
+
+For example, if you wanted to a bottle sound, set:
+
+```
+pomodoro.soundName=Bottle
+``
+
+To have no sound, set:
+
+```
+pomodoro.soundName=
+```
+
+Note: the API this uses is deprecated, so support is not guaranteed past macOS 11.0.
+
 ### Task project
 
 By default, Taskwarrior Pomodoro do not include project name in task list. If you need tasks to be prefixed by project names, and to customize default separator symbol you could set following setting as follows:
