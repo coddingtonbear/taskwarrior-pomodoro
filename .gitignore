@@ -1,3 +1,6 @@
 Taskwarrior Pomodoro.xcodeproj/xcuserdata/
 builds/
 *.dmg
+
+# user settings
+xcuserdata/
