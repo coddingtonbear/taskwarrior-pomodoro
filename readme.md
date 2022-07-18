@@ -76,7 +76,7 @@ For example, if you wanted to a bottle sound, set:
 
 ```
 pomodoro.soundName=Bottle
-``
+```
 
 To have no sound, set:
 
