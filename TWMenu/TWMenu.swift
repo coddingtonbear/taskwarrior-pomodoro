@@ -43,6 +43,7 @@ public class TWMenu: NSObject, NSMenuDelegate, NSUserNotificationCenterDelegate 
             "/usr/local/bin/task",
             "/usr/bin/task",
             "/opt/local/bin/task",
+            "/opt/homebrew/bin/task",
             ]
         if let configuredPath = configuration!["pomodoro.taskwarrior_path"] {
             pathOptions = [configuredPath]
